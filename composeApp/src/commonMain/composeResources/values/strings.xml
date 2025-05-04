@@ -1,0 +1,6 @@
+<resources>
+        <string name="topics_refreshed">Topics were refreshed</string>
+        <string name="alert">Alert</string>
+        <string name="add_topic">Add Topic</string>
+        <string name="reorder_topics">Reorder Topics</string>
+</resources>
