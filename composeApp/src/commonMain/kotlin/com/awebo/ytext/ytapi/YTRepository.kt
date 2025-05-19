@@ -60,9 +60,6 @@ class YTRepository(val videoDao: VideoDao) {
             )
         }
 
-    suspend fun deleteTopic(topicId: Long) =
-        videoDao.deleteTopic(topicId)
-
     suspend fun createTopic(title: String, channelHandleList: List<String>): List<Video> {
         val loadedChannelEntities: List<ChannelEntity> = channelHandleList.map {
             val channelId = loadChannelId(it)
@@ -370,6 +367,7 @@ class YTRepository(val videoDao: VideoDao) {
 
 
         val topicChannelsWithVideos = videoDao.getAllTopicsWithChannelsAndVideos()
+        println("reloadAllTopics topicChannelsWithVideos: ${topicChannelsWithVideos.size}")
         topicChannelsWithVideos.forEach { topic ->
 
             topic.channels.forEach { channel ->

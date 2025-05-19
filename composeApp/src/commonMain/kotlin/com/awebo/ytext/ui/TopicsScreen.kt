@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -30,6 +31,7 @@ import com.awebo.ytext.model.Topic
 import com.awebo.ytext.model.Video
 import com.awebo.ytext.util.toFormattedString
 import com.awebo.ytext.ytapi.YTViewModel
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun TopicsScreen(viewModel: YTViewModel) {
@@ -56,6 +58,7 @@ fun TopicsScreen(viewModel: YTViewModel) {
     }
 }
 
+@Preview
 @Composable
 fun Topic(topic: Topic, onVideoClick: (String) -> Unit, onVideoRemove: (Topic, Video) -> Unit) {
     LazyRow(
@@ -78,7 +81,7 @@ fun Topic(topic: Topic, onVideoClick: (String) -> Unit, onVideoRemove: (Topic, V
                     )
                     IconButton(
                         modifier = Modifier
-                            .align(androidx.compose.ui.Alignment.TopEnd),
+                            .align(Alignment.TopEnd),
                         onClick = { onVideoRemove(topic, video) }) {
                         Icon(
                             rememberVectorPainter(image = Icons.Filled.Delete),
@@ -87,14 +90,29 @@ fun Topic(topic: Topic, onVideoClick: (String) -> Unit, onVideoRemove: (Topic, V
                         )
                     }
                 }
-                Text(
-                    text = video.publishedAt.toFormattedString(),
-                    style = TextStyle(
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    textAlign = TextAlign.Start
-                )
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        modifier = Modifier.align(Alignment.TopStart),
+                        text = video.publishedAt.toFormattedString(),
+                        style = TextStyle(
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        textAlign = TextAlign.Start
+                    )
+                    Text(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .background(Color.Red)
+                            .padding(horizontal = 4.dp),
+                        text = video.duration.toFormattedString(),
+                        style = TextStyle(
+                            fontSize = 22.sp,
+                            color = Color.White,
+                        ),
+                        textAlign = TextAlign.Start
+                    )
+                }
                 Text(
                     text = video.title,
                     style = TextStyle(

@@ -27,6 +27,8 @@ expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase> {
 @Dao
 interface VideoDao {
 
+    // video methods
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(item: VideoEntity)
 
@@ -41,6 +43,10 @@ interface VideoDao {
 
     @Query("UPDATE video SET watched = :watched WHERE id = :videoId")
     suspend fun markVideoWatched(videoId: String, watched: Boolean)
+
+
+
+    // channel methods
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(item: ChannelEntity)
@@ -58,9 +64,10 @@ interface VideoDao {
 
 
 
+    // topic methods
+
     @Query("SELECT * FROM topic ORDER BY `order` DESC LIMIT 1")
     suspend fun getTopicWithHighestOrder(): TopicEntity?
-
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(item: TopicEntity): Long
@@ -68,8 +75,8 @@ interface VideoDao {
     @Update
     suspend fun updateTopics(topics: List<TopicEntity>)
 
-    @Query("DELETE FROM topic WHERE id = :topicId")
-    suspend fun deleteTopic(topicId: Long)
+//    @Query("DELETE FROM topic WHERE id = :topicId")
+//    suspend fun deleteTopic(topicId: Long)
 
     @Transaction
     @Query("SELECT * FROM topic WHERE id = :topicId")

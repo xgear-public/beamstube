@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.getString
 import ytext.composeapp.generated.resources.Res
-import ytext.composeapp.generated.resources.topics_refreshed
+import ytext.composeapp.generated.resources.topics_updating
 
 class YTViewModel(private val ytRepository: YTRepository) : ViewModel() {
 
@@ -58,10 +58,13 @@ class YTViewModel(private val ytRepository: YTRepository) : ViewModel() {
 
     fun reloadAllTopics() {
         viewModelScope.launch {
+            val message = getString(Res.string.topics_updating)
+            _uiState.update { state ->
+                state.copy(uiState = Toast(message))
+            }
             withContext(Dispatchers.IO) {
                 val topics = ytRepository.reloadAllTopics()
-                val message = getString(Res.string.topics_refreshed)
-                _uiState.value = DashboardUIState(topics, uiState = Toast(message))
+                _uiState.value = DashboardUIState(topics)
             }
         }
     }
@@ -108,14 +111,20 @@ class YTViewModel(private val ytRepository: YTRepository) : ViewModel() {
                             video.id != videoToRemove.id
                         }
                     )
-                    val updatedTopics = state.topics.map {
-                        if (it.id == topic.id) {
-                            updatedTopic ?: it
+                    state.copy(
+                        topics =
+                        if (updatedTopic?.videos?.isNotEmpty() == true) {
+                            state.topics.map {
+                                if (it.id == topic.id) {
+                                    updatedTopic
+                                } else {
+                                    it
+                                }
+                            }
                         } else {
-                            it
+                            state.topics.filter { it.id != topic.id }
                         }
-                    }
-                    state.copy(topics = updatedTopics)
+                    )
                 }
             }
         }
