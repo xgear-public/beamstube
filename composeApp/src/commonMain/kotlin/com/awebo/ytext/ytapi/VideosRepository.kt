@@ -10,11 +10,6 @@ import com.awebo.ytext.model.Video.Companion.fromEntity
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.youtube.YouTube
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import java.io.IOException
 import java.time.Duration
 import java.time.Instant
@@ -22,7 +17,7 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.*
 
-class YTRepository(val videoDao: VideoDao) {
+class VideosRepository(val videoDao: VideoDao) {
 
     val youtubeDataApiClient = YouTube.Builder(NetHttpTransport(), GsonFactory()) { httpRequest -> }
         .setApplicationName(YT_APP_NAME) // Replace with your application name
@@ -410,7 +405,7 @@ class YTRepository(val videoDao: VideoDao) {
         videoDao.markVideoWatched(video.id, video.watched)
     }
 
-    companion object {
+    companion object Companion {
         const val YT_API_KEY = "AIzaSyBkBcs6tOHKi7Q9_GrPNCJA1TVSBtoSGvs"
         const val YT_APP_NAME = "YTExt"
         const val MAX_RESULTS_PER_PAGE_SDK = 50L // Max results per page (use Long for SDK methods)

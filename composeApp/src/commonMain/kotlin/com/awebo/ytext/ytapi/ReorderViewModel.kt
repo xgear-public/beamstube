@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class ReorderViewModel(
-    private val ytRepository: YTRepository
+    private val videosRepository: VideosRepository
 ) : ViewModel() {
 
     private val _topics = MutableStateFlow<List<Topic>>(emptyList())
@@ -21,7 +21,7 @@ class ReorderViewModel(
 
     fun loadTopics() {
         viewModelScope.launch {
-            val allTopics = ytRepository.getAllTopics()
+            val allTopics = videosRepository.getAllTopics()
             _topics.value = allTopics
         }
     }

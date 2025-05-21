@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.awebo.ytext.model.Topic
 import com.awebo.ytext.model.Video
 import com.awebo.ytext.openUrl
-import com.awebo.ytext.ytapi.UiState.Toast
+import com.awebo.ytext.ui.DashboardUIState
+import com.awebo.ytext.ui.UiState
+import com.awebo.ytext.ui.UiState.Toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +19,7 @@ import org.jetbrains.compose.resources.getString
 import ytext.composeapp.generated.resources.Res
 import ytext.composeapp.generated.resources.topics_updating
 
-class YTViewModel(private val ytRepository: YTRepository) : ViewModel() {
+class YTViewModel(private val videosRepository: VideosRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUIState(emptyList()))
     val uiState: StateFlow<DashboardUIState> = _uiState.asStateFlow()
@@ -30,9 +32,9 @@ class YTViewModel(private val ytRepository: YTRepository) : ViewModel() {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 if (cleanUp) {
-                    ytRepository.deleteOldVideos()
+                    videosRepository.deleteOldVideos()
                 }
-                val topics = ytRepository.loadAllTopics()
+                val topics = videosRepository.loadAllTopics()
                 _uiState.value = DashboardUIState(topics)
             }
         }
@@ -46,7 +48,7 @@ class YTViewModel(private val ytRepository: YTRepository) : ViewModel() {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 val channels = topicChannel.split(",")
-                ytRepository.createTopic(title, channels)
+                videosRepository.createTopic(title, channels)
                 loadAllTopics()
             }
         }
@@ -63,7 +65,7 @@ class YTViewModel(private val ytRepository: YTRepository) : ViewModel() {
                 state.copy(uiState = Toast(message))
             }
             withContext(Dispatchers.IO) {
-                val topics = ytRepository.reloadAllTopics()
+                val topics = videosRepository.reloadAllTopics()
                 _uiState.value = DashboardUIState(topics)
             }
         }
@@ -94,8 +96,8 @@ class YTViewModel(private val ytRepository: YTRepository) : ViewModel() {
     fun onTopicsUpdated(topics: List<Topic>, topicsToRemove: List<Topic>) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                ytRepository.deleteTopics(topicsToRemove)
-                ytRepository.updateTopicsOrder(topics, topicsToRemove)
+                videosRepository.deleteTopics(topicsToRemove)
+                videosRepository.updateTopicsOrder(topics, topicsToRemove)
                 loadAllTopics()
             }
         }
@@ -104,7 +106,7 @@ class YTViewModel(private val ytRepository: YTRepository) : ViewModel() {
     fun onVideoRemove(topic: Topic, videoToRemove: Video) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                ytRepository.markVideoWatched(videoToRemove.copy(watched = true))
+                videosRepository.markVideoWatched(videoToRemove.copy(watched = true))
                 _uiState.update { state ->
                     val updatedTopic = state.topics.find { it.id == topic.id }?.copy(
                         videos = topic.videos.filter { video ->

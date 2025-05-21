@@ -1,4 +1,4 @@
-package com.awebo.ytext.ytapi
+package com.awebo.ytext.ui
 
 import com.awebo.ytext.model.Topic
 

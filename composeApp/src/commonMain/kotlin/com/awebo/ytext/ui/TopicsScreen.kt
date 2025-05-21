@@ -32,6 +32,8 @@ import com.awebo.ytext.model.Video
 import com.awebo.ytext.util.toFormattedString
 import com.awebo.ytext.ytapi.YTViewModel
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import java.time.Duration
+import java.time.Instant
 
 @Composable
 fun TopicsScreen(viewModel: YTViewModel) {
@@ -58,7 +60,6 @@ fun TopicsScreen(viewModel: YTViewModel) {
     }
 }
 
-@Preview
 @Composable
 fun Topic(topic: Topic, onVideoClick: (String) -> Unit, onVideoRemove: (Topic, Video) -> Unit) {
     LazyRow(
@@ -125,4 +126,29 @@ fun Topic(topic: Topic, onVideoClick: (String) -> Unit, onVideoRemove: (Topic, V
             }
         }
     }
+}
+
+@Preview
+@Composable
+fun TopicPreview() {
+    Topic(
+        topic = Topic(
+            0L,
+            "TEST",
+            buildList {
+                Video(
+                    "sd",
+                    "Test Video",
+                    "Test Desc",
+                    "https://i.ytimg.com/vi/4Ld-b_SPzUs/mqdefault.jpg",
+                    Instant.now(),
+                    Duration.ofHours(1),
+                    false,
+                )
+            },
+            Color.Red,
+            0
+        ),
+        onVideoClick = {},
+        onVideoRemove = { _, _ -> })
 }
