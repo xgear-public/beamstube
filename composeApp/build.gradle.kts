@@ -14,6 +14,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.roomGradlePlugin)
     alias(libs.plugins.gradle.buildconfig)
+    alias(libs.plugins.kotlinxSerialization)
 }
 
 room {
@@ -62,6 +63,9 @@ kotlin {
             implementation(libs.koin.compose.viewModel)
 
             implementation(libs.reorderable)
+
+            api(libs.androidx.datastore.preferences.core)
+            api(libs.androidx.datastore.core.okio)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

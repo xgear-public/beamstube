@@ -2,11 +2,13 @@ package com.awebo.ytext.ytapi
 
 import androidx.compose.ui.graphics.Color
 import com.awebo.ytext.data.ChannelEntity
+import com.awebo.ytext.data.MiscDataStore
 import com.awebo.ytext.data.TopicEntity
 import com.awebo.ytext.data.VideoDao
 import com.awebo.ytext.model.Topic
 import com.awebo.ytext.model.Video
 import com.awebo.ytext.model.Video.Companion.fromEntity
+import com.awebo.ytext.util.toFormattedString
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.youtube.YouTube
@@ -17,7 +19,7 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.*
 
-class VideosRepository(val videoDao: VideoDao) {
+class VideosRepository(val miscDataStore: MiscDataStore, val videoDao: VideoDao) {
 
     val youtubeDataApiClient = YouTube.Builder(NetHttpTransport(), GsonFactory()) { httpRequest -> }
         .setApplicationName(YT_APP_NAME) // Replace with your application name
@@ -370,8 +372,14 @@ class VideosRepository(val videoDao: VideoDao) {
             }
         }
 
-        println("reloadAllTopics stopped 1: ${DateTimeFormatter.ISO_INSTANT.format(Instant.now())}")
-        return loadAllTopics()
+        println("reloadAllTopics stopped 1: ${Instant.now().toFormattedString()}")
+        val loadAllTopics = loadAllTopics()
+
+        val lastReload = miscDataStore.lastReload()
+        println("lastReload: ${lastReload.toFormattedString()}")
+        miscDataStore.update(Instant.now())
+
+        return loadAllTopics
     }
 
     suspend fun deleteOldVideos() {

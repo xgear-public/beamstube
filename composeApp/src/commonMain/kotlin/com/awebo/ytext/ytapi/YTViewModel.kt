@@ -2,6 +2,7 @@ package com.awebo.ytext.ytapi
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.awebo.ytext.data.MiscDataStore
 import com.awebo.ytext.model.Topic
 import com.awebo.ytext.model.Video
 import com.awebo.ytext.openUrl
@@ -19,7 +20,10 @@ import org.jetbrains.compose.resources.getString
 import ytext.composeapp.generated.resources.Res
 import ytext.composeapp.generated.resources.topics_updating
 
-class YTViewModel(private val videosRepository: VideosRepository) : ViewModel() {
+class YTViewModel(
+    private val videosRepository: VideosRepository,
+    private val miscDataStore: MiscDataStore,
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUIState(emptyList()))
     val uiState: StateFlow<DashboardUIState> = _uiState.asStateFlow()
@@ -66,7 +70,7 @@ class YTViewModel(private val videosRepository: VideosRepository) : ViewModel() 
             }
             withContext(Dispatchers.IO) {
                 val topics = videosRepository.reloadAllTopics()
-                _uiState.value = DashboardUIState(topics)
+                _uiState.value = DashboardUIState(topics, miscDataStore.lastReload())
             }
         }
     }
@@ -115,17 +119,17 @@ class YTViewModel(private val videosRepository: VideosRepository) : ViewModel() 
                     )
                     state.copy(
                         topics =
-                        if (updatedTopic?.videos?.isNotEmpty() == true) {
-                            state.topics.map {
-                                if (it.id == topic.id) {
-                                    updatedTopic
-                                } else {
-                                    it
+                            if (updatedTopic?.videos?.isNotEmpty() == true) {
+                                state.topics.map {
+                                    if (it.id == topic.id) {
+                                        updatedTopic
+                                    } else {
+                                        it
+                                    }
                                 }
+                            } else {
+                                state.topics.filter { it.id != topic.id }
                             }
-                        } else {
-                            state.topics.filter { it.id != topic.id }
-                        }
                     )
                 }
             }
