@@ -1,7 +1,8 @@
-package com.awebo.ytext.ytapi
+package com.awebo.ytext.ui.vm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.awebo.ytext.data.VideosRepository
 import com.awebo.ytext.model.Topic
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

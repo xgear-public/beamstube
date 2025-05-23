@@ -15,7 +15,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.awebo.ytext.model.Topic
-import com.awebo.ytext.ytapi.ReorderViewModel
+import com.awebo.ytext.ui.vm.ReorderViewModel
 import org.jetbrains.compose.resources.painterResource
 import sh.calvin.reorderable.ReorderableColumn
 import ytext.composeapp.generated.resources.Res

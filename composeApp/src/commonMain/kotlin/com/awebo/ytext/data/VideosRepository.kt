@@ -1,15 +1,10 @@
-package com.awebo.ytext.ytapi
+package com.awebo.ytext.data
 
 import androidx.compose.ui.graphics.Color
-import com.awebo.ytext.data.ChannelEntity
-import com.awebo.ytext.data.MiscDataStore
-import com.awebo.ytext.data.TopicEntity
-import com.awebo.ytext.data.VideoDao
-import com.awebo.ytext.data.VideoDataSource
 import com.awebo.ytext.model.Topic
 import com.awebo.ytext.model.Video
-import com.awebo.ytext.model.Video.Companion.fromEntity
 import com.awebo.ytext.util.toFormattedString
+import com.awebo.ytext.ytapi.WEEK_IN_SECONDS
 import java.time.Instant
 
 class VideosRepository(
@@ -32,7 +27,7 @@ class VideosRepository(
                     it.topic.title,
                     it.channels
                         .flatMap { it.videos.filter { it.watched.not() } }
-                        .map(::fromEntity)
+                        .map(Video.Companion::fromEntity)
                         .sortedByDescending { it.publishedAt },
                     it.topic.color,
                     it.topic.order,
@@ -77,7 +72,7 @@ class VideosRepository(
             val topicEntity = TopicEntity(
                 id = DUMMY_ID,
                 title = title,
-                color = Color.hsl(
+                color = Color.Companion.hsl(
                     hue = hue,
                     saturation = 1f,
                     lightness = 0.95f
@@ -131,7 +126,7 @@ class VideosRepository(
         channelVideos?.let {
             if (channelVideos.channel.lastUpdated.isAfter(Instant.now().minusSeconds(MINUTES_TTL * 60))) {
                 println("skipping update, channel last updated less than $MINUTES_TTL min ago")
-                return channelVideos.videos.map(::fromEntity)
+                return channelVideos.videos.map(Video.Companion::fromEntity)
             }
         }
 

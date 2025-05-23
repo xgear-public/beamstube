@@ -30,7 +30,7 @@ import coil3.compose.AsyncImage
 import com.awebo.ytext.model.Topic
 import com.awebo.ytext.model.Video
 import com.awebo.ytext.util.toFormattedString
-import com.awebo.ytext.ytapi.YTViewModel
+import com.awebo.ytext.ui.vm.YTViewModel
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import java.time.Duration
 import java.time.Instant

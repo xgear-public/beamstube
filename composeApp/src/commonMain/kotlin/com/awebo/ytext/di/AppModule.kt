@@ -7,10 +7,10 @@ import com.awebo.ytext.data.VideoDao
 import com.awebo.ytext.data.VideoDataSource
 import com.awebo.ytext.data.getDatabaseBuilder
 import com.awebo.ytext.data.getRoomDatabase
-import com.awebo.ytext.ytapi.ReorderViewModel
-import com.awebo.ytext.ytapi.VideosRepository
+import com.awebo.ytext.ui.vm.ReorderViewModel
+import com.awebo.ytext.data.VideosRepository
 import com.awebo.ytext.ytapi.YTDataSource
-import com.awebo.ytext.ytapi.YTViewModel
+import com.awebo.ytext.ui.vm.YTViewModel
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module

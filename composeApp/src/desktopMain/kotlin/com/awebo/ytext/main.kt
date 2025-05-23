@@ -7,8 +7,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.awebo.ytext.di.initKoin
-import com.awebo.ytext.ytapi.ReorderViewModel
-import com.awebo.ytext.ui.UiState
+import com.awebo.ytext.ui.vm.ReorderViewModel
+import com.awebo.ytext.ui.vm.UiState
 import com.awebo.ytext.util.toFormattedString
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.viewmodel.koinViewModel

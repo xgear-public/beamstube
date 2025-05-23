@@ -1,4 +1,4 @@
-package com.awebo.ytext.ui
+package com.awebo.ytext.ui.vm
 
 import com.awebo.ytext.model.Topic
 import java.time.Instant
