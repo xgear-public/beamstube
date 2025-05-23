@@ -121,15 +121,11 @@ dependencies {
 //    add("kspMingwX64Test", project(":test-processor"))
 }
 
-var dbFileName ="beam_tube_debug.db"
+val isReleaseMode = project.hasProperty("releaseBuild") && project.property("releaseBuild") == "true"
 
 compose.desktop {
     application {
         mainClass = "com.awebo.ytext.MainKt"
-
-        buildTypes.release{
-            dbFileName= "beam_tube.db"
-        }
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
@@ -139,6 +135,12 @@ compose.desktop {
             macOS {
                 bundleID = "com.awebo.ytext"
                 iconFile.set(iconsRoot.resolve("YTExt.icns"))
+            }
+            buildTypes.release.proguard {
+                version.set("7.3.2")
+                configurationFiles.from(project.file("proguard-rules.pro"))
+                isEnabled.set(false)
+                obfuscate.set(false)
             }
         }
     }
@@ -155,10 +157,10 @@ buildConfig {
             .build()
     }
 
-    buildConfigField("DB_FILE_NAME", dbFileName)
+    buildConfigField("IS_RELEASE_MODE", isReleaseMode)
 
     sourceSets.named("desktopMain") {
         useKotlinOutput() // resets `generator` back to default's Kotlin generator for JVM
-        buildConfigField("DB_FILE_NAME", dbFileName)
+        buildConfigField("IS_RELEASE_MODE", isReleaseMode)
     }
 }
