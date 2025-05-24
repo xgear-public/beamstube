@@ -16,7 +16,12 @@ val appModule = module {
     single<AppDatabase> { getRoomDatabase(getDatabaseBuilder()) }
     single<VideoDao> { get<AppDatabase>().getDao() }
 
-    singleOf(::VideosRepository)
+    single {
+        VideosRepository(
+            videoDao = get(),
+            ytApiKey = YTExt.composeApp.BuildConfig.YT_API_KEY
+        )
+    }
     viewModelOf(::YTViewModel)
     viewModelOf(::ReorderViewModel)
 

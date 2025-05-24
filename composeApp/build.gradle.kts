@@ -152,9 +152,11 @@ buildConfig {
     }
 
     buildConfigField("DB_FILE_NAME", dbFileName)
+    buildConfigField("String", "YT_API_KEY", "\"AIzaSyBkBcs6tOHKi7Q9_GrPNCJA1TVSBtoSGvs\"")
 
     sourceSets.named("desktopMain") {
         useKotlinOutput() // resets `generator` back to default's Kotlin generator for JVM
         buildConfigField("DB_FILE_NAME", dbFileName)
+        buildConfigField("String", "YT_API_KEY", "\"AIzaSyBkBcs6tOHKi7Q9_GrPNCJA1TVSBtoSGvs\"")
     }
 }

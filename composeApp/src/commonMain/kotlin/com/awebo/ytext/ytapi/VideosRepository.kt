@@ -17,7 +17,10 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.*
 
-class VideosRepository(val videoDao: VideoDao) {
+class VideosRepository(
+    private val videoDao: VideoDao,
+    private val ytApiKey: String
+) {
 
     val youtubeDataApiClient = YouTube.Builder(NetHttpTransport(), GsonFactory()) { httpRequest -> }
         .setApplicationName(YT_APP_NAME) // Replace with your application name
@@ -176,7 +179,7 @@ class VideosRepository(val videoDao: VideoDao) {
             searchListRequest.maxResults = 10L // You can adjust the number of results
 
             // Set the API key
-            searchListRequest.key = YT_API_KEY
+            searchListRequest.key = ytApiKey
 
             // Calculate the date one week ago
             val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
@@ -226,7 +229,7 @@ class VideosRepository(val videoDao: VideoDao) {
             val channelsListResponse = youtubeDataApiClient.channels()
                 .list(listOf("contentDetails")) // Part: We only need contentDetails for relatedPlaylists
                 .setId(listOf(channelId)) // Use listOf for setting ID
-                .setKey(YT_API_KEY)
+                .setKey(ytApiKey)
                 .execute()
 
             val channel = channelsListResponse.items?.firstOrNull()
@@ -244,7 +247,7 @@ class VideosRepository(val videoDao: VideoDao) {
             val playlistItemsListResponse = youtubeDataApiClient.playlistItems()
                 .list(listOf("snippet")) // Part: We need snippet for resourceId.videoId
                 .setPlaylistId(uploadsPlaylistId)
-                .setKey(YT_API_KEY)
+                .setKey(ytApiKey)
                 .setMaxResults(MAX_RESULTS_PER_PAGE_SDK)
                 // Add .setPageToken(nextPageToken) for pagination
                 .execute()
@@ -269,8 +272,8 @@ class VideosRepository(val videoDao: VideoDao) {
             // Note: If videoIds list is larger than 50, it needs to be chunked into multiple calls.
             val videoListResponse = youtubeDataApiClient.videos()
                 .list(listOf("snippet", "contentDetails")) // Part: Get snippet and contentDetails (for duration)
-                .setKey(YT_API_KEY)
-                .setId(videoIds) // Provide comma-separated IDs (max 50)
+                .setKey(ytApiKey)
+                .setId(videoIds) // Pass the list directly, the API expects a List<String>
                 .execute()
 
             val videoItems = videoListResponse.items
@@ -338,7 +341,7 @@ class VideosRepository(val videoDao: VideoDao) {
         try {
             val channelsListRequest = youtubeDataApiClient.channels().list(listOf("id"))
             channelsListRequest.forHandle = userHandle
-            channelsListRequest.key = YT_API_KEY
+            channelsListRequest.key = ytApiKey
 
             val channelsResponse = channelsListRequest.execute()
             val channelResults = channelsResponse.items
@@ -405,8 +408,7 @@ class VideosRepository(val videoDao: VideoDao) {
         videoDao.markVideoWatched(video.id, video.watched)
     }
 
-    companion object Companion {
-        const val YT_API_KEY = "AIzaSyBkBcs6tOHKi7Q9_GrPNCJA1TVSBtoSGvs"
+    companion object {
         const val YT_APP_NAME = "YTExt"
         const val MAX_RESULTS_PER_PAGE_SDK = 50L // Max results per page (use Long for SDK methods)
 
