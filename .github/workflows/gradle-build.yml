@@ -32,6 +32,6 @@ jobs:
       - name: Upload macOS .dmg Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ytext-${{ github.ref_name }}-${{ steps.date.outputs.date }}.dmg
+          name: ytext-${{ github.ref_name | replace('/', '_') | replace('\\', '_') }}-${{ steps.date.outputs.date }}.dmg
           path: composeApp/build/compose/binaries/main/dmg/*.dmg
           retention-days: 1
