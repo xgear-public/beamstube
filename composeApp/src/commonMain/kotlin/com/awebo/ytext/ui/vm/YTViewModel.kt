@@ -1,13 +1,12 @@
-package com.awebo.ytext.ytapi
+package com.awebo.ytext.ui.vm
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.awebo.ytext.data.MiscDataStore
+import com.awebo.ytext.data.VideosRepository
 import com.awebo.ytext.model.Topic
 import com.awebo.ytext.model.Video
 import com.awebo.ytext.openUrl
-import com.awebo.ytext.ui.DashboardUIState
-import com.awebo.ytext.ui.UiState
-import com.awebo.ytext.ui.UiState.Toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +18,10 @@ import org.jetbrains.compose.resources.getString
 import ytext.composeapp.generated.resources.Res
 import ytext.composeapp.generated.resources.topics_updating
 
-class YTViewModel(private val videosRepository: VideosRepository) : ViewModel() {
+class YTViewModel(
+    private val videosRepository: VideosRepository,
+    private val miscDataStore: MiscDataStore,
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUIState(emptyList()))
     val uiState: StateFlow<DashboardUIState> = _uiState.asStateFlow()
@@ -62,11 +64,11 @@ class YTViewModel(private val videosRepository: VideosRepository) : ViewModel() 
         viewModelScope.launch {
             val message = getString(Res.string.topics_updating)
             _uiState.update { state ->
-                state.copy(uiState = Toast(message))
+                state.copy(uiState = UiState.Toast(message))
             }
             withContext(Dispatchers.IO) {
                 val topics = videosRepository.reloadAllTopics()
-                _uiState.value = DashboardUIState(topics)
+                _uiState.value = DashboardUIState(topics, miscDataStore.lastReload())
             }
         }
     }
@@ -115,17 +117,17 @@ class YTViewModel(private val videosRepository: VideosRepository) : ViewModel() 
                     )
                     state.copy(
                         topics =
-                        if (updatedTopic?.videos?.isNotEmpty() == true) {
-                            state.topics.map {
-                                if (it.id == topic.id) {
-                                    updatedTopic
-                                } else {
-                                    it
+                            if (updatedTopic?.videos?.isNotEmpty() == true) {
+                                state.topics.map {
+                                    if (it.id == topic.id) {
+                                        updatedTopic
+                                    } else {
+                                        it
+                                    }
                                 }
+                            } else {
+                                state.topics.filter { it.id != topic.id }
                             }
-                        } else {
-                            state.topics.filter { it.id != topic.id }
-                        }
                     )
                 }
             }

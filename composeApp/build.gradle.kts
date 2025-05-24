@@ -14,6 +14,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.roomGradlePlugin)
     alias(libs.plugins.gradle.buildconfig)
+    alias(libs.plugins.kotlinxSerialization)
 }
 
 room {
@@ -62,6 +63,9 @@ kotlin {
             implementation(libs.koin.compose.viewModel)
 
             implementation(libs.reorderable)
+
+            api(libs.androidx.datastore.preferences.core)
+            api(libs.androidx.datastore.core.okio)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
@@ -117,15 +121,11 @@ dependencies {
 //    add("kspMingwX64Test", project(":test-processor"))
 }
 
-var dbFileName ="beam_tube_debug.db"
+val isReleaseMode = project.hasProperty("releaseBuild") && project.property("releaseBuild") == "true"
 
 compose.desktop {
     application {
         mainClass = "com.awebo.ytext.MainKt"
-
-        buildTypes.release{
-            dbFileName= "beam_tube.db"
-        }
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
@@ -135,6 +135,12 @@ compose.desktop {
             macOS {
                 bundleID = "com.awebo.ytext"
                 iconFile.set(iconsRoot.resolve("YTExt.icns"))
+            }
+            buildTypes.release.proguard {
+                version.set("7.3.2")
+                configurationFiles.from(project.file("proguard-rules.pro"))
+                isEnabled.set(false)
+                obfuscate.set(false)
             }
         }
     }
@@ -151,12 +157,12 @@ buildConfig {
             .build()
     }
 
-    buildConfigField("DB_FILE_NAME", dbFileName)
+    buildConfigField("IS_RELEASE_MODE", isReleaseMode)
     buildConfigField("String", "YT_API_KEY", "\"AIzaSyBkBcs6tOHKi7Q9_GrPNCJA1TVSBtoSGvs\"")
 
     sourceSets.named("desktopMain") {
         useKotlinOutput() // resets `generator` back to default's Kotlin generator for JVM
-        buildConfigField("DB_FILE_NAME", dbFileName)
+        buildConfigField("IS_RELEASE_MODE", isReleaseMode)
         buildConfigField("String", "YT_API_KEY", "\"AIzaSyBkBcs6tOHKi7Q9_GrPNCJA1TVSBtoSGvs\"")
     }
 }

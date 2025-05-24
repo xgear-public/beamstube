@@ -11,7 +11,8 @@ data class Video(
     val thumbnailUrl: String,
     val publishedAt: Instant,
     val duration: Duration,
-    val watched: Boolean
+    val watched: Boolean,
+    val sourcePlatform: String = "YouTube" // Default to YouTube for backward compatibility
 ) {
     fun toEntity(channelEntityId: String = "") = VideoEntity(
         id = id,
@@ -21,7 +22,8 @@ data class Video(
         publishedAt = publishedAt,
         duration = duration,
         watched = watched,
-        channelEntityId = channelEntityId
+        channelEntityId = channelEntityId,
+        sourcePlatform = sourcePlatform
     )
 
     companion object {
@@ -34,6 +36,7 @@ data class Video(
                 thumbnailUrl = videoEntity.thumbnailUrl,
                 duration = videoEntity.duration,
                 watched = videoEntity.watched,
+                sourcePlatform = videoEntity.sourcePlatform
             )
         }
     }

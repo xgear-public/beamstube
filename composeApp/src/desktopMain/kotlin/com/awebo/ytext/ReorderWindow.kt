@@ -9,7 +9,7 @@ import androidx.compose.ui.window.FrameWindowScope
 import androidx.compose.ui.window.rememberDialogState
 import com.awebo.ytext.model.Topic
 import com.awebo.ytext.ui.Reorder
-import com.awebo.ytext.ytapi.ReorderViewModel
+import com.awebo.ytext.ui.vm.ReorderViewModel
 import org.jetbrains.compose.resources.stringResource
 import ytext.composeapp.generated.resources.Res
 import ytext.composeapp.generated.resources.reorder_topics

@@ -23,10 +23,15 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build macOS App
-        run: ./gradlew packageDmg
+        run: ./gradlew packageDmg -PreleaseBuild=true
+
+      - name: Get current timestamp
+        id: date
+        run: echo "date=$(date -u +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
 
       - name: Upload macOS .dmg Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: macos-app
+          name: ytext-${{ github.ref_name }}-${{ steps.date.outputs.date }}.dmg
           path: composeApp/build/compose/binaries/main/dmg/*.dmg
+          retention-days: 1

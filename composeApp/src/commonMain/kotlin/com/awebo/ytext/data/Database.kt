@@ -44,6 +44,9 @@ interface VideoDao {
     @Query("UPDATE video SET watched = :watched WHERE id = :videoId")
     suspend fun markVideoWatched(videoId: String, watched: Boolean)
 
+    @Query("SELECT COUNT(*) FROM video")
+    suspend fun getVideosCount(): Long
+
 
 
     // channel methods
@@ -61,6 +64,9 @@ interface VideoDao {
     @Transaction
     @Query("SELECT * FROM channel WHERE id = :channelId")
     suspend fun getChannelVideosByChannelId(channelId: String): ChannelVideos?
+
+    @Query("UPDATE channel SET lastUpdated = :lastUpdated WHERE id = :channelId")
+    suspend fun updateChannelLastUpdated(channelId: String, lastUpdated: Instant)
 
 
 
@@ -114,7 +120,8 @@ data class VideoEntity(
     val thumbnailUrl: String,
     val publishedAt: Instant,
     val duration: Duration,
-    val watched: Boolean
+    val watched: Boolean,
+    val sourcePlatform: String = "YouTube" // Default to YouTube for backward compatibility
 )
 
 @Entity(
@@ -133,6 +140,7 @@ data class ChannelEntity(
     val handle: String,
     val lastUpdated: Instant,
     val topicId: Long,
+    val sourcePlatform: String = "YouTube" // Default to YouTube for backward compatibility
 )
 
 @Entity(tableName = "topic")
