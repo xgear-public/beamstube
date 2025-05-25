@@ -13,4 +13,5 @@ sealed class UiState{
     data object Reorder : UiState()
     data object AddTopic : UiState()
     data class Toast(val message: String) : UiState()
+    data class SummarizedText(val message: String) : UiState()
 }

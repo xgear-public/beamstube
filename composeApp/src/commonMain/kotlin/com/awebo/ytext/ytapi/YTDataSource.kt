@@ -1,5 +1,6 @@
 package com.awebo.ytext.ytapi
 
+import YTExt.composeApp.BuildConfig
 import com.awebo.ytext.data.VideoDataSource
 import com.awebo.ytext.model.Video
 import com.google.api.client.http.javanet.NetHttpTransport
@@ -9,8 +10,8 @@ import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
-const val YT_APP_NAME = "YTExt"
-const val YT_API_KEY = "AIzaSyBkBcs6tOHKi7Q9_GrPNCJA1TVSBtoSGvs" // TODO: Move to configuration
+const val YT_APP_NAME = BuildConfig.YT_APP_NAME
+const val YT_API_KEY = BuildConfig.YT_DATA_API_V3_KEY
 val WEEK_IN_SECONDS = 7 * 24 * 60 * 60L
 val MAX_RESULTS_PER_PAGE_SDK = 50L
 
@@ -19,9 +20,10 @@ val MAX_RESULTS_PER_PAGE_SDK = 50L
  * Handles all YouTube API interactions.
  */
 class YTDataSource : VideoDataSource {
-    private val youtubeDataApiClient = YouTube.Builder(NetHttpTransport(), GsonFactory()) { _ -> }
-        .setApplicationName(YT_APP_NAME)
-        .build()
+    private val youtubeDataApiClient =
+        YouTube.Builder(NetHttpTransport(), GsonFactory()) { _ -> }
+            .setApplicationName(YT_APP_NAME)
+            .build()
 
     override val platformName: String = "YouTube"
 
@@ -71,7 +73,8 @@ class YTDataSource : VideoDataSource {
                         id = it.id,
                         title = it.snippet.title,
                         description = it.snippet.description,
-                        publishedAt = Instant.ofEpochMilli(it.snippet.publishedAt.value).atZone(java.time.ZoneOffset.UTC).toInstant(),
+                        publishedAt = Instant.ofEpochMilli(it.snippet.publishedAt.value)
+                            .atZone(java.time.ZoneOffset.UTC).toInstant(),
                         thumbnailUrl = it.snippet.thumbnails.medium.url,
                         duration = it.contentDetails?.let { details ->
                             Duration.parse(details.duration)

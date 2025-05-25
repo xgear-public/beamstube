@@ -13,12 +13,14 @@ import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -27,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import coil3.compose.rememberAsyncImagePainter
+import coil3.request.ImageRequest
 import com.awebo.ytext.model.Topic
 import com.awebo.ytext.model.Video
 import com.awebo.ytext.util.toFormattedString
@@ -55,13 +59,21 @@ fun TopicsScreen(viewModel: YTViewModel) {
                 onVideoRemove = { topic, video ->
                     viewModel.onVideoRemove(topic, video)
                 },
+                onSummarize = { video ->
+                    viewModel.onSummarize(video)
+                }
             )
         }
     }
 }
 
 @Composable
-fun Topic(topic: Topic, onVideoClick: (String) -> Unit, onVideoRemove: (Topic, Video) -> Unit) {
+fun Topic(
+    topic: Topic,
+    onVideoClick: (String) -> Unit,
+    onVideoRemove: (Topic, Video) -> Unit,
+    onSummarize: (Video) -> Unit = { }
+) {
     LazyRow(
         modifier = Modifier
             .background(topic.color)
@@ -88,6 +100,16 @@ fun Topic(topic: Topic, onVideoClick: (String) -> Unit, onVideoRemove: (Topic, V
                             rememberVectorPainter(image = Icons.Filled.Delete),
                             contentDescription = "Remove video",
                             tint = Color.White
+                        )
+                    }
+                    IconButton(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart),
+                        onClick = { onSummarize(video) }) {
+                        Icon(
+                            rememberVectorPainter(image = Icons.Filled.Info),
+                            contentDescription = "Remove video",
+                            tint = Color.hsv(217f, 0.68f, 1.00f),
                         )
                     }
                 }
@@ -121,7 +143,8 @@ fun Topic(topic: Topic, onVideoClick: (String) -> Unit, onVideoRemove: (Topic, V
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     ),
-                    textAlign = TextAlign.Start
+                    textAlign = TextAlign.Start,
+                    maxLines = 4,
                 )
             }
         }

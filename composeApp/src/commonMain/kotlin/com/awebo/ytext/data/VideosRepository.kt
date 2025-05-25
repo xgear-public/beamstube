@@ -225,9 +225,5 @@ class VideosRepository(
     companion object {
         private const val MINUTES_TTL = 30L // 30 minutes cache TTL
         private const val DUMMY_ID = 0L
-
-        const val YT_API_KEY = "AIzaSyBkBcs6tOHKi7Q9_GrPNCJA1TVSBtoSGvs"
-        const val YT_APP_NAME = "YTExt"
-        const val MAX_RESULTS_PER_PAGE_SDK = 50L // Max results per page (use Long for SDK methods)
     }
 }

@@ -6,7 +6,7 @@ android-targetSdk = "35"
 androidx-activityCompose = "1.10.1"
 androidx-appcompat = "1.7.0"
 androidx-constraintlayout = "2.2.1"
-androidx-core-ktx = "1.15.0"
+androidx-core-ktx = "1.16.0"
 androidx-espresso-core = "3.6.1"
 androidx-lifecycle = "2.8.4"
 androidx-material = "1.12.0"
@@ -14,19 +14,20 @@ androidx-test-junit = "1.2.1"
 compose-multiplatform = "1.7.3"
 junit = "4.13.2"
 kotlin = "2.1.10"
-kotlinx-coroutines = "1.10.1"
+kotlinx-coroutines = "1.10.2"
 kmp-logging = "7.0.3"
 slf4j = "2.0.3"
-room = "2.7.0-rc03"
-sqlite-bundled = "2.5.0-rc03"
+room = "2.7.1"
+sqlite-bundled = "2.5.1"
 yt-api = "v3-rev20250224-2.0.0"
 ksp="2.1.10-1.0.31"
-kodein="7.25.0"
 coil="3.1.0"
 gradle-buildconfig="5.6.2"
 koin = "4.1.0-Beta5"
 reorderable = "2.4.3"
 dataStore = "1.1.7"
+ktor = "3.1.3"
+kotlin-json = "1.8.1"
 
 
 [libraries]
@@ -46,15 +47,17 @@ androidx-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle
 kotlinx-coroutines-swing = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
 kmp-logging = { group = "io.github.oshai", name = "kotlin-logging-jvm", version.ref = "kmp-logging" }
 slf4j = { group = "org.slf4j", name = "slf4j-simple", version.ref = "slf4j" }
+
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 room-driver-connector = { group = "androidx.sqlite", name = "sqlite", version.ref = "room" }
 sqlite-bundled = { group = "androidx.sqlite", name = "sqlite-bundled", version.ref = "sqlite-bundled" }
+
 yt-api = { group = "com.google.apis", name = "google-api-services-youtube", version.ref = "yt-api" }
-kodein = { group = "org.kodein.di", name = "kodein-di", version.ref = "kodein" }
-kodein-compose = { group = "org.kodein.di", name = "kodein-di-framework-compose", version.ref = "kodein" }
+
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 coil-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
+
 reorderable = { group = "sh.calvin.reorderable", name = "reorderable", version.ref = "reorderable" }
 
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
@@ -63,6 +66,12 @@ koin-compose-viewModel = { module = "io.insert-koin:koin-compose-viewmodel", ver
 
 androidx-datastore-core-okio = { group = "androidx.datastore", name = "datastore-core-okio", version.ref = "dataStore" }
 androidx-datastore-preferences-core = { group = "androidx.datastore", name = "datastore-preferences-core", version.ref = "dataStore" }
+
+ktor-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
+ktor-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
+ktor-cn = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
+kotlin-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlin-json" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

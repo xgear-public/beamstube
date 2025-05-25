@@ -16,7 +16,7 @@ fun FrameWindowScope.AlertWindow(visible: Boolean, alertText: String, onCloseReq
     if (visible) DialogWindow(
         state = rememberDialogState(),
         onCloseRequest = onCloseRequest,
-        resizable = false,
+        resizable = true,
         title = stringResource(Res.string.alert)
     ) {
         Alert(modifier = Modifier.fillMaxSize(), alertText = alertText, onDismiss = onCloseRequest)

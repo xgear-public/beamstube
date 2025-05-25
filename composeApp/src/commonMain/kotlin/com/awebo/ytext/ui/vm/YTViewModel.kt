@@ -7,6 +7,7 @@ import com.awebo.ytext.data.VideosRepository
 import com.awebo.ytext.model.Topic
 import com.awebo.ytext.model.Video
 import com.awebo.ytext.openUrl
+import com.awebo.ytext.ytapi.YouTubeTranscriptSummarizer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,10 +43,6 @@ class YTViewModel(
         }
     }
 
-    /**
-     * @param topics - new topics order
-     * @param topicsToRemove - topics to remove
-     */
     fun addTopic(title: String, topicChannel: String) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
@@ -71,10 +68,6 @@ class YTViewModel(
                 _uiState.value = DashboardUIState(topics, miscDataStore.lastReload())
             }
         }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
     }
 
     fun startReorderTopics() {
@@ -130,6 +123,34 @@ class YTViewModel(
                             }
                     )
                 }
+            }
+        }
+    }
+
+    private var isSummarizing = false
+    fun onSummarize(video: Video) {
+        if (isSummarizing.not()) {
+            isSummarizing = true
+            viewModelScope.launch {
+                withContext(Dispatchers.IO) {
+                    YouTubeTranscriptSummarizer().use { summarizer ->
+                        val summarizedText = summarizer.summarizeVideo(video.id)
+                        isSummarizing = false
+                        summarizedText?.let { text ->
+                            _uiState.update { state ->
+                                state.copy(
+                                    uiState = UiState.Toast(text)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            _uiState.update { state ->
+                state.copy(
+                    uiState = UiState.Toast("Waiting for previous summarization to finish")
+                )
             }
         }
     }
