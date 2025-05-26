@@ -22,21 +22,18 @@ jobs:
           java-version: 17
           cache: 'gradle'  # Cache Gradle dependencies
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          cache-encryption-key: gradle-cache-key-${{ github.sha }}
-          
-      - name: Restore Gradle cache
+      - name: Cache Gradle
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
+            ~/.gradle/daemon
+            ~/.gradle/native
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-            
+
       - name: Grant execute permission to Gradle wrapper
         run: chmod +x ./gradlew
 
