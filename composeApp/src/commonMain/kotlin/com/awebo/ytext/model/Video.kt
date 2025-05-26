@@ -1,6 +1,7 @@
 package com.awebo.ytext.model
 
 import com.awebo.ytext.data.VideoEntity
+import com.awebo.ytext.data.VideoPlatform
 import java.time.Duration
 import java.time.Instant
 
@@ -12,7 +13,7 @@ data class Video(
     val publishedAt: Instant,
     val duration: Duration,
     val watched: Boolean,
-    val sourcePlatform: String = "YouTube" // Default to YouTube for backward compatibility
+    val sourcePlatform: String = VideoPlatform.YOUTUBE.name // Default to YouTube for backward compatibility
 ) {
     fun toEntity(channelEntityId: String = "") = VideoEntity(
         id = id,

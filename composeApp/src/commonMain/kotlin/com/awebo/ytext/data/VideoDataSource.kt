@@ -1,7 +1,6 @@
 package com.awebo.ytext.data
 
 import com.awebo.ytext.model.Video
-import java.time.Instant
 
 /**
  * Interface defining the contract for video data sources.
@@ -25,5 +24,5 @@ interface VideoDataSource {
     /**
      * The platform name that this data source represents (e.g., "YouTube", "Vimeo")
      */
-    val platformName: String
+    val videoPlatform: VideoPlatform
 }

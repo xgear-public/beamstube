@@ -2,6 +2,7 @@ package com.awebo.ytext.ytapi
 
 import YTExt.composeApp.BuildConfig
 import com.awebo.ytext.data.VideoDataSource
+import com.awebo.ytext.data.VideoPlatform
 import com.awebo.ytext.model.Video
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
@@ -25,7 +26,7 @@ class YTDataSource : VideoDataSource {
             .setApplicationName(YT_APP_NAME)
             .build()
 
-    override val platformName: String = "YouTube"
+    override val videoPlatform: VideoPlatform = VideoPlatform.YOUTUBE
 
     override suspend fun getVideosForChannel(channelId: String): List<Video>? {
         try {
@@ -80,7 +81,7 @@ class YTDataSource : VideoDataSource {
                             Duration.parse(details.duration)
                         } ?: Duration.ZERO,
                         watched = false,
-                        sourcePlatform = platformName
+                        sourcePlatform = videoPlatform.name
                     )
                 }
 

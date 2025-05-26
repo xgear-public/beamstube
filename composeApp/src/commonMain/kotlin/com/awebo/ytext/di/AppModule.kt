@@ -1,18 +1,9 @@
 package com.awebo.ytext.di
 
-import YTExt.composeApp.BuildConfig
-import com.awebo.ytext.data.AppDatabase
-import com.awebo.ytext.data.MiscDataStore
-import com.awebo.ytext.data.MiscDataStoreFactory
-import com.awebo.ytext.data.VideoDao
-import com.awebo.ytext.data.VideoDataSource
-import com.awebo.ytext.data.getDatabaseBuilder
-import com.awebo.ytext.data.getRoomDatabase
+import com.awebo.ytext.data.*
 import com.awebo.ytext.ui.vm.ReorderViewModel
-import com.awebo.ytext.data.VideosRepository
-import com.awebo.ytext.ytapi.YTDataSource
 import com.awebo.ytext.ui.vm.YTViewModel
-import org.koin.core.module.dsl.singleOf
+import com.awebo.ytext.ytapi.YTDataSource
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
@@ -21,7 +12,7 @@ val appModule = module {
     single<AppDatabase> { getRoomDatabase(getDatabaseBuilder()) }
     single<VideoDao> { get<AppDatabase>().getDao() }
     single<MiscDataStore> { MiscDataStoreFactory().createMiscDataStore() }
-    single<Map<String, VideoDataSource>> { mapOf("youtube" to YTDataSource()) }
+    single<Map<String, VideoDataSource>> { mapOf(VideoPlatform.YOUTUBE.name to YTDataSource()) }
 
     single {
         VideosRepository(

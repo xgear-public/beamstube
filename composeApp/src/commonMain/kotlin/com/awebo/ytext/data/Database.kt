@@ -20,6 +20,7 @@ abstract class AppDatabase : RoomDatabase() {
 }
 
 // The Room compiler generates the `actual` implementations.
+@Suppress("KotlinNoActualForExpect")
 expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase> {
     override fun initialize(): AppDatabase
 }
@@ -121,7 +122,7 @@ data class VideoEntity(
     val publishedAt: Instant,
     val duration: Duration,
     val watched: Boolean,
-    val sourcePlatform: String = "YouTube" // Default to YouTube for backward compatibility
+    val sourcePlatform: String = VideoPlatform.YOUTUBE.name // Default to YouTube for backward compatibility
 )
 
 @Entity(
@@ -140,7 +141,7 @@ data class ChannelEntity(
     val handle: String,
     val lastUpdated: Instant,
     val topicId: Long,
-    val sourcePlatform: String = "YouTube" // Default to YouTube for backward compatibility
+    val sourcePlatform: String = VideoPlatform.YOUTUBE.name // Default to YouTube for backward compatibility
 )
 
 @Entity(tableName = "topic")

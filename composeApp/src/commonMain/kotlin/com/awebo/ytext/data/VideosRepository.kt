@@ -13,7 +13,7 @@ class VideosRepository(
     val dataSources: Map<String, VideoDataSource>,
 ) {
 
-    private val defaultDataSource = dataSources["youtube"]!!
+    private val defaultDataSource = dataSources[VideoPlatform.YOUTUBE.name]!!
 
     suspend fun loadAllTopics(): List<Topic> =
         videoDao.getAllTopicsWithChannelsAndVideos()
@@ -54,11 +54,11 @@ class VideosRepository(
                 val channelId = dataSource.getChannelId(handle)
                 if (channelId != null) {
                     return@map ChannelEntity(
-                        id = "${dataSource.platformName}:$channelId",
+                        id = "${dataSource.videoPlatform.name}:$channelId",
                         handle = handle,
                         lastUpdated = Instant.ofEpochMilli(0),
                         topicId = 0,
-                        sourcePlatform = dataSource.platformName
+                        sourcePlatform = dataSource.videoPlatform.name
                     )
                 }
             }
@@ -136,7 +136,7 @@ class VideosRepository(
             parts[0] to parts[1]
         } else {
             // For backward compatibility with existing data
-            defaultDataSource.platformName to channelId
+            defaultDataSource.videoPlatform.name to channelId
         }
 
         val dataSource = dataSources[platform.lowercase()] ?: defaultDataSource
@@ -164,7 +164,7 @@ class VideosRepository(
         println("channelId: $channelId, Videos: ${videos.size}")
         // Update the channel's last updated time
         val items = videos.map { video ->
-            video.toEntity("${dataSource.platformName}:$channelId")
+            video.toEntity("${dataSource.videoPlatform.name}:$channelId")
         }
         println("items: ${items.size}")
 
