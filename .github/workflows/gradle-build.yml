@@ -46,10 +46,7 @@ jobs:
           YT_APP_NAME: ${{ secrets.YT_APP_NAME }}
           YT_DATA_API_V3_KEY: ${{ secrets.YT_DATA_API_V3_KEY }}
         run: |
-          ./gradlew packageDmg -PreleaseBuild=true \
-            --build-cache \
-            --configuration-cache \
-            --parallel
+          ./gradlew packageDmg -PreleaseBuild=true --build-cache --configuration-cache --parallel
 
       - name: Get current timestamp
         id: date
