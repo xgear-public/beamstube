@@ -131,6 +131,11 @@ class YTViewModel(
     fun onSummarize(video: Video) {
         if (isSummarizing.not()) {
             isSummarizing = true
+            _uiState.update { state ->
+                state.copy(
+                    uiState = UiState.Toast("Summarizing...")
+                )
+            }
             viewModelScope.launch {
                 withContext(Dispatchers.IO) {
                     YouTubeTranscriptSummarizer().use { summarizer ->
@@ -139,7 +144,7 @@ class YTViewModel(
                         summarizedText?.let { text ->
                             _uiState.update { state ->
                                 state.copy(
-                                    uiState = UiState.Toast(text)
+                                    uiState = UiState.Summarize(text, video.title)
                                 )
                             }
                         }

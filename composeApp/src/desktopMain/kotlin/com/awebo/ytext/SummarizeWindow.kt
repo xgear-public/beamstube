@@ -1,26 +1,35 @@
 package com.awebo.ytext
 
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.window.DialogWindow
-import androidx.compose.ui.window.FrameWindowScope
 import androidx.compose.ui.window.rememberDialogState
-import com.awebo.ytext.ui.Alert
+import com.awebo.ytext.ui.Summarize
 import org.jetbrains.compose.resources.stringResource
 import ytext.composeapp.generated.resources.Res
 import ytext.composeapp.generated.resources.alert
+import ytext.composeapp.generated.resources.video_summarization
 
 @Composable
-fun FrameWindowScope.AlertWindow(visible: Boolean, alertText: String, onCloseRequest: () -> Unit) {
+fun SummarizeWindow(
+    visible: Boolean,
+    summarizeText: String,
+    videoTitle: String,
+    onCloseRequest: () -> Unit
+) {
     if (visible) DialogWindow(
         state = rememberDialogState(width = Dp.Unspecified, height = Dp.Unspecified),
         onCloseRequest = onCloseRequest,
-        resizable = false,
-        title = stringResource(Res.string.alert)
+        resizable = true,
+        title = stringResource(Res.string.video_summarization)
     ) {
-        Alert(modifier = Modifier.wrapContentSize(), alertText = alertText, onDismiss = onCloseRequest)
+        Summarize(
+            modifier = Modifier.wrapContentSize(),
+            summarizeText = summarizeText,
+            videoTitle = videoTitle,
+            onDismiss = onCloseRequest
+        )
     }
 }

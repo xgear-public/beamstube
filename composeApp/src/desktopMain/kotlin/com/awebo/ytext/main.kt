@@ -65,6 +65,21 @@ fun main() = application {
                     viewModel.closeDialog()
                 }
             )
+            SummarizeWindow(
+                visible = uiState.uiState?.let { it is UiState.Summarize } == true,
+                summarizeText =
+                    if (uiState.uiState != null && uiState.uiState is UiState.Summarize)
+                        (uiState.uiState as UiState.Summarize).text
+                    else
+                        "",
+                onCloseRequest = {
+                    viewModel.closeDialog()
+                },
+                videoTitle = if (uiState.uiState != null && uiState.uiState is UiState.Summarize)
+                    (uiState.uiState as UiState.Summarize).videoTitle
+                else
+                    ""
+            )
             AddTopicWindow(
                 visible = uiState.uiState?.let { it is UiState.AddTopic } == true,
                 addTopicAction = { title, channels ->
