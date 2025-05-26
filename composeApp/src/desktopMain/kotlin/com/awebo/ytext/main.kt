@@ -1,5 +1,6 @@
 package com.awebo.ytext
 
+import YTExt.composeApp.BuildConfig
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.input.key.Key
@@ -157,7 +158,7 @@ fun setupMacAboutMenu() {
                 // Use Compose's logic or just show a Swing dialog
                 javax.swing.JOptionPane.showMessageDialog(
                     null,
-                    "Version 1.0",
+                    "Version ${BuildConfig.APP_VERSION}",
                     "About",
                     javax.swing.JOptionPane.INFORMATION_MESSAGE
                 )

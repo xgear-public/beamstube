@@ -6,7 +6,17 @@ on:
       - '**'
 
 jobs:
+  generate-version:
+    runs-on: ubuntu-latest
+    outputs:
+      app-version: ${{ steps.set-version.outputs.version }}
+    steps:
+      - name: Set version from date
+        id: set-version
+        run: echo "version=$(date +'%d.%m.%Y')" >> $GITHUB_OUTPUT
+
   build-macos-app:
+    needs: generate-version
     runs-on: macos-latest
 
     steps:
@@ -42,8 +52,9 @@ jobs:
           GOOGLE_AI_STUDIO_API_KEY: ${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}
           YT_APP_NAME: ${{ secrets.YT_APP_NAME }}
           YT_DATA_API_V3_KEY: ${{ secrets.YT_DATA_API_V3_KEY }}
+          APP_VERSION: ${{ needs.generate-version.outputs.app-version }}
         run: |
-          ./gradlew packageDmg -PreleaseBuild=true --build-cache --configuration-cache --parallel
+          ./gradlew packageDmg -PreleaseBuild=true -Pversion=${{ needs.generate-version.outputs.app-version }} --build-cache --configuration-cache --parallel
 
       - name: Get current timestamp
         id: date

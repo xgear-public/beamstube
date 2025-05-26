@@ -177,6 +177,7 @@ fun loadSecret(
 val ytApiKey: String? = loadSecret("YT_DATA_API_V3_KEY")
 val ytAppName: String? = loadSecret("YT_APP_NAME")
 val googleAiApiKey: String? = loadSecret("GOOGLE_AI_STUDIO_API_KEY")
+val appVersion: String = System.getenv("APP_VERSION") ?: "\"1.0.0\""
 
 buildConfig {
     generator = object : BuildConfigKotlinGenerator() {
@@ -193,6 +194,7 @@ buildConfig {
     buildConfigField("String", "YT_DATA_API_V3_KEY", ytApiKey)
     buildConfigField("String", "YT_APP_NAME", ytAppName)
     buildConfigField("String", "GOOGLE_AI_STUDIO_API_KEY", googleAiApiKey)
+    buildConfigField("String", "APP_VERSION", appVersion)
 
     sourceSets.named("desktopMain") {
         useKotlinOutput() // resets `generator` back to default's Kotlin generator for JVM
@@ -200,5 +202,6 @@ buildConfig {
         buildConfigField("String", "YT_API_KEY", ytApiKey)
         buildConfigField("String", "YT_APP_NAME", ytAppName)
         buildConfigField("String", "GOOGLE_AI_STUDIO_API_KEY", googleAiApiKey)
+        buildConfigField("String", "APP_VERSION", appVersion)
     }
 }
