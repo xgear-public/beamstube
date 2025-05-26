@@ -12,7 +12,7 @@ val appModule = module {
     single<AppDatabase> { getRoomDatabase(getDatabaseBuilder()) }
     single<VideoDao> { get<AppDatabase>().getDao() }
     single<MiscDataStore> { MiscDataStoreFactory().createMiscDataStore() }
-    single<Map<String, VideoDataSource>> { mapOf(VideoPlatform.YOUTUBE.name to YTDataSource()) }
+    single<Map<VideoPlatform, VideoDataSource>> { mapOf(VideoPlatform.YOUTUBE to YTDataSource()) }
 
     single {
         VideosRepository(

@@ -13,7 +13,7 @@ data class Video(
     val publishedAt: Instant,
     val duration: Duration,
     val watched: Boolean,
-    val sourcePlatform: String = VideoPlatform.YOUTUBE.name // Default to YouTube for backward compatibility
+    val sourcePlatform: VideoPlatform = VideoPlatform.YOUTUBE // Default to YouTube for backward compatibility
 ) {
     fun toEntity(channelEntityId: String = "") = VideoEntity(
         id = id,

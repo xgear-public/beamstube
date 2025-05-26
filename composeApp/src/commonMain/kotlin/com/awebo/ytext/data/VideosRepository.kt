@@ -10,10 +10,10 @@ import java.time.Instant
 class VideosRepository(
 	val miscDataStore: MiscDataStore,
     val videoDao: VideoDao,
-    val dataSources: Map<String, VideoDataSource>,
+    val dataSources: Map<VideoPlatform, VideoDataSource>,
 ) {
 
-    private val defaultDataSource = dataSources[VideoPlatform.YOUTUBE.name]!!
+    private val defaultDataSource = dataSources[VideoPlatform.YOUTUBE]!!
 
     suspend fun loadAllTopics(): List<Topic> =
         videoDao.getAllTopicsWithChannelsAndVideos()
@@ -54,11 +54,11 @@ class VideosRepository(
                 val channelId = dataSource.getChannelId(handle)
                 if (channelId != null) {
                     return@map ChannelEntity(
-                        id = "${dataSource.videoPlatform.name}:$channelId",
+                        id = channelId,
                         handle = handle,
                         lastUpdated = Instant.ofEpochMilli(0),
                         topicId = 0,
-                        sourcePlatform = dataSource.videoPlatform.name
+                        sourcePlatform = dataSource.videoPlatform
                     )
                 }
             }
@@ -119,8 +119,8 @@ class VideosRepository(
         }
     }
 
-    private suspend fun updateChannelVideosByChannelId(channelId: String): List<Video> {
-        println("updateChannelVideosByChannelId started for $channelId")
+    private suspend fun updateChannelVideosByChannelId(channelId: String, channelHandle: String? = "null"): List<Video> {
+        println("updateChannelVideosByChannelId started for $channelHandle, id $channelId")
 
         val channelVideos = videoDao.getChannelVideosByChannelId(channelId)
         channelVideos?.let {
@@ -136,10 +136,10 @@ class VideosRepository(
             parts[0] to parts[1]
         } else {
             // For backward compatibility with existing data
-            defaultDataSource.videoPlatform.name to channelId
+            defaultDataSource.videoPlatform to channelId
         }
 
-        val dataSource = dataSources[platform.lowercase()] ?: defaultDataSource
+        val dataSource = dataSources[platform] ?: defaultDataSource
         val loadedVideos = loadAndSaveVideosByChannelId(actualChannelId, dataSource)
 
         videoDao.updateChannelLastUpdated(channelId, Instant.now())
@@ -151,6 +151,7 @@ class VideosRepository(
 //            )
 //            videoDao.updateChannelLastUpdated(updatedChannel)
 //        }
+        println("updateChannelVideosByChannelId finished for $channelHandle, id $channelId")
 
         return loadedVideos
     }
@@ -164,7 +165,7 @@ class VideosRepository(
         println("channelId: $channelId, Videos: ${videos.size}")
         // Update the channel's last updated time
         val items = videos.map { video ->
-            video.toEntity("${dataSource.videoPlatform.name}:$channelId")
+            video.toEntity(channelId)
         }
         println("items: ${items.size}")
 
@@ -181,7 +182,7 @@ class VideosRepository(
         topicChannelsWithVideos.forEach { topic ->
 
             topic.channels.forEach { channel ->
-                updateChannelVideosByChannelId(channel.channel.id)
+                updateChannelVideosByChannelId(channel.channel.id, channel.channel.handle)
             }
         }
 

@@ -4,14 +4,24 @@ package com.awebo.ytext.data
 
 import androidx.compose.ui.graphics.Color
 import androidx.room.*
+import androidx.room.migration.Migration
+import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import androidx.sqlite.execSQL
 import kotlinx.coroutines.Dispatchers
 import java.time.Duration
 import java.time.Instant
 
+/**
+ *
+ * db versions
+ *
+ * 1 - initial state
+ * 2 - add sourcePlatform to video and channel tables
+ */
 @Database(
     entities = [VideoEntity::class, ChannelEntity::class, TopicEntity::class],
-    version = 1
+    version = 2
 )
 @TypeConverters(InstantTypeConverter::class, ColorTypeConverter::class, DurationTypeConverter::class)
 @ConstructedBy(AppDatabaseConstructor::class)
@@ -24,6 +34,19 @@ abstract class AppDatabase : RoomDatabase() {
 expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase> {
     override fun initialize(): AppDatabase
 }
+
+fun getRoomDatabase(
+    builder: RoomDatabase.Builder<AppDatabase>
+): AppDatabase {
+    return builder
+        .addMigrations(MIGRATION_1_2)
+//        .fallbackToDestructiveMigrationOnDowngrade()
+        .setDriver(BundledSQLiteDriver())
+        .setQueryCoroutineContext(Dispatchers.IO)
+        .build()
+}
+
+expect fun getDatabaseBuilder(): RoomDatabase.Builder<AppDatabase>
 
 @Dao
 interface VideoDao {
@@ -122,7 +145,7 @@ data class VideoEntity(
     val publishedAt: Instant,
     val duration: Duration,
     val watched: Boolean,
-    val sourcePlatform: String = VideoPlatform.YOUTUBE.name // Default to YouTube for backward compatibility
+    val sourcePlatform: VideoPlatform = VideoPlatform.YOUTUBE // Default to YouTube for backward compatibility
 )
 
 @Entity(
@@ -141,7 +164,7 @@ data class ChannelEntity(
     val handle: String,
     val lastUpdated: Instant,
     val topicId: Long,
-    val sourcePlatform: String = VideoPlatform.YOUTUBE.name // Default to YouTube for backward compatibility
+    val sourcePlatform: VideoPlatform = VideoPlatform.YOUTUBE // Default to YouTube for backward compatibility
 )
 
 @Entity(tableName = "topic")
@@ -177,18 +200,22 @@ data class TopicChannelsWithVideos(
 )
 
 
-fun getRoomDatabase(
-    builder: RoomDatabase.Builder<AppDatabase>
-): AppDatabase {
-    return builder
-//        .addMigrations(MIGRATIONS)
-//        .fallbackToDestructiveMigrationOnDowngrade()
-        .setDriver(BundledSQLiteDriver())
-        .setQueryCoroutineContext(Dispatchers.IO)
-        .build()
-}
+private val MIGRATION_1_2 = object : Migration(1, 2) {
+    override fun migrate(connection: SQLiteConnection) {
+                // Add sourcePlatform column to video table with default value 'YOUTUBE'
+        connection.execSQL("""
+            ALTER TABLE video 
+            ADD COLUMN sourcePlatform TEXT NOT NULL DEFAULT 'YOUTUBE'
+        """.trimIndent())
 
-expect fun getDatabaseBuilder(): RoomDatabase.Builder<AppDatabase>
+        // Add sourcePlatform column to channel table with default value 'YOUTUBE'
+        connection.execSQL("""
+            ALTER TABLE channel 
+            ADD COLUMN sourcePlatform TEXT NOT NULL DEFAULT 'YOUTUBE'
+        """.trimIndent())
+    }
+
+}
 
 class InstantTypeConverter {
     @TypeConverter

@@ -81,7 +81,7 @@ class YTDataSource : VideoDataSource {
                             Duration.parse(details.duration)
                         } ?: Duration.ZERO,
                         watched = false,
-                        sourcePlatform = videoPlatform.name
+                        sourcePlatform = videoPlatform
                     )
                 }
 
