@@ -22,9 +22,9 @@ fun FrameWindowScope.ReorderWindow(
     onCloseRequest: () -> Unit
 ) {
     if (visible) DialogWindow(
-        state = rememberDialogState(height = 600.dp),
+        state = rememberDialogState(height = 600.dp, width = 600.dp),
         onCloseRequest = onCloseRequest,
-        resizable = false,
+        resizable = true,
         title = stringResource(Res.string.reorder_topics)
     ) {
         Reorder(modifier = Modifier.fillMaxSize(), reorderViewModel = reorderViewModel, reorderAction = reorderAction)

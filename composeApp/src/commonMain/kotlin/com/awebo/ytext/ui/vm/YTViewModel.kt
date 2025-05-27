@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.awebo.ytext.data.MiscDataStore
 import com.awebo.ytext.data.VideosRepository
 import com.awebo.ytext.model.Topic
+import com.awebo.ytext.model.TopicChangeRequest
 import com.awebo.ytext.model.Video
 import com.awebo.ytext.openUrl
 import com.awebo.ytext.ytapi.YouTubeTranscriptSummarizer
@@ -43,10 +44,9 @@ class YTViewModel(
         }
     }
 
-    fun addTopic(title: String, topicChannel: String) {
+    fun addTopic(title: String, channels: String) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                val channels = topicChannel.split(",")
                 videosRepository.createTopic(title, channels)
                 loadAllTopics()
             }

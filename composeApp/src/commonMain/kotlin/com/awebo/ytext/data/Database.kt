@@ -21,7 +21,7 @@ import java.time.Instant
  */
 @Database(
     entities = [VideoEntity::class, ChannelEntity::class, TopicEntity::class],
-    version = 2
+    version = 3
 )
 @TypeConverters(InstantTypeConverter::class, ColorTypeConverter::class, DurationTypeConverter::class)
 @ConstructedBy(AppDatabaseConstructor::class)
@@ -71,6 +71,9 @@ interface VideoDao {
     @Query("SELECT COUNT(*) FROM video")
     suspend fun getVideosCount(): Long
 
+    @Query("UPDATE video SET watched = 1 WHERE id IN (:videoIds)")
+    suspend fun markVideosAsWatched(videoIds: List<String>)
+
 
 
     // channel methods
@@ -91,6 +94,12 @@ interface VideoDao {
 
     @Query("UPDATE channel SET lastUpdated = :lastUpdated WHERE id = :channelId")
     suspend fun updateChannelLastUpdated(channelId: String, lastUpdated: Instant)
+
+    @Query("DELETE FROM channel WHERE id IN (:channelIds)")
+    suspend fun deleteChannels(channelIds: List<String>)
+    
+    @Query("DELETE FROM channel WHERE topicId = :topicId")
+    suspend fun deleteChannelsByTopicId(topicId: Long)
 
 
 
@@ -120,7 +129,7 @@ interface VideoDao {
     suspend fun deleteTopics(topicsIds: List<Long>)
 
     @Query("SELECT * FROM topic ORDER BY `order` ASC")
-    suspend fun getAllTopics(): List<TopicEntity>
+    suspend fun getAllTopics(): List<TopicChannelsWithVideos>
 
 }
 
@@ -198,7 +207,6 @@ data class TopicChannelsWithVideos(
     )
     val channels: List<ChannelVideos>
 )
-
 
 private val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(connection: SQLiteConnection) {
