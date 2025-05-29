@@ -18,10 +18,11 @@ import java.time.Instant
  *
  * 1 - initial state
  * 2 - add sourcePlatform to video and channel tables
+ * 
  */
 @Database(
     entities = [VideoEntity::class, ChannelEntity::class, TopicEntity::class],
-    version = 3
+    version = 2
 )
 @TypeConverters(InstantTypeConverter::class, ColorTypeConverter::class, DurationTypeConverter::class)
 @ConstructedBy(AppDatabaseConstructor::class)
