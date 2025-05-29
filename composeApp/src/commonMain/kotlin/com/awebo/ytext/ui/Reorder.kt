@@ -76,6 +76,9 @@ fun Reorder(
                 editableItemsList = editableItemsList.toMutableList().apply {
                     add(toIndex, removeAt(fromIndex))
                 }
+                editableChannelsStrings = editableChannelsStrings.toMutableList().apply {
+                    add(toIndex, removeAt(fromIndex))
+                }
             },
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) { index, item, isDragging ->
@@ -95,6 +98,9 @@ fun Reorder(
                                             editableItemsList = editableItemsList.toMutableList().apply {
                                                 add(index - 1, removeAt(index))
                                             }
+                                            editableChannelsStrings = editableChannelsStrings.toMutableList().apply {
+                                                add(index - 1, removeAt(index))
+                                            }
                                             true
                                         } else {
                                             false
@@ -106,6 +112,9 @@ fun Reorder(
                                     action = {
                                         if (index < editableItemsList.size - 1) {
                                             editableItemsList = editableItemsList.toMutableList().apply {
+                                                add(index + 1, removeAt(index))
+                                            }
+                                            editableChannelsStrings = editableChannelsStrings.toMutableList().apply {
                                                 add(index + 1, removeAt(index))
                                             }
                                             true
