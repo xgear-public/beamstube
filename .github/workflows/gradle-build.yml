@@ -4,12 +4,6 @@ on:
   push:
     branches:
       - '**'
-  workflow_dispatch:
-    inputs:
-      reason:
-        description: 'Reason for manual trigger'
-        required: true
-        default: 'Manual build triggered via GitHub UI'
 
 jobs:
   generate-version:
@@ -72,14 +66,3 @@ jobs:
           name: ytext-${{ github.ref_name }}-${{ steps.date.outputs.date }}.dmg
           path: composeApp/build/compose/binaries/main/dmg/*.dmg
           retention-days: 1
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref_name }} # This is the key change!
-          name: Release ${{ github.ref_name }} # Optional: sets the release title
-          files: |
-            composeApp/build/compose/binaries/main/dmg/*.dmg
-          # Ensure correct path to your generated DMG
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
