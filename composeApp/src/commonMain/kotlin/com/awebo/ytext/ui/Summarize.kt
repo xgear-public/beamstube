@@ -8,7 +8,11 @@ import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlin.text.Regex
 
 @Composable
 fun Summarize(
@@ -26,7 +30,26 @@ fun Summarize(
         )
         Text(
             modifier = Modifier.widthIn(min = 600.dp, max = 800.dp),
-            text = summarizeText
+            text = buildAnnotatedString {
+                val pattern = Regex("\\*\\*(.*?)\\*\\*")
+                var lastIndex = 0
+                
+                pattern.findAll(summarizeText).forEach { matchResult ->
+                    // Add text before the match
+                    append(summarizeText.substring(lastIndex, matchResult.range.first))
+                    
+                    // Add the matched text (without **) with bold style
+                    pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
+                    append(matchResult.groupValues[1])
+                    pop()
+                    
+                    lastIndex = matchResult.range.last + 1
+                }
+                // Add remaining text
+                if (lastIndex < summarizeText.length) {
+                    append(summarizeText.substring(lastIndex))
+                }
+            }
         )
         Button(
             onClick = { onDismiss() }) {
