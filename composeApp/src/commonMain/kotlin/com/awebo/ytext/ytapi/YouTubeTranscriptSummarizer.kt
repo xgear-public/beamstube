@@ -1,6 +1,8 @@
 package com.awebo.ytext.ytapi
 
 import YTExt.composeApp.BuildConfig
+import com.awebo.ytext.util.Logger
+import com.awebo.ytext.util.createLogger
 import io.ktor.client.*
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.*
@@ -17,19 +19,26 @@ import kotlinx.serialization.json.Json
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
+import java.nio.charset.Charset
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
 
 /**
  * A class for summarizing YouTube video transcripts using yt-dlp and Google's Gemini API.
- *
  */
 class YouTubeTranscriptSummarizer : AutoCloseable {
+    private val logger = createLogger(
+        File(System.getProperty("user.home"), "Library/Logs/YouTubeams/debug.log")
+    )
+
     companion object {
+        private const val FFMPEG_PATH = "/opt/homebrew/bin/ffmpeg"
         private const val YTDLP_COMMAND = "/opt/homebrew/bin/yt-dlp"
         private const val DEFAULT_LANGUAGE = "en"
     }
+
+    private val ffmpegPath = System.getenv("FFMPEG_PATH") ?: FFMPEG_PATH
 
     // Ktor HTTP Client for Gemini
     private val ktorHttpClient = HttpClient(CIO) {
@@ -49,26 +58,24 @@ class YouTubeTranscriptSummarizer : AutoCloseable {
      */
     suspend fun summarizeVideo(videoUrl: String): String? {
         if (!isYtDlpAvailable()) {
-            println("Error: yt-dlp command not found or not executable. Please ensure it's installed and in your PATH.")
+            logger.error("yt-dlp command not found or not executable. Please ensure it's installed and in your PATH.")
             return null
         }
 
         val videoId = extractVideoId(videoUrl)
         if (videoId == null) {
-            println("Could not extract a valid video ID pattern from the URL: $videoUrl")
+            logger.warn("Could not extract a valid video ID pattern from the URL: {}", videoUrl)
         } else {
-            println("Extracted Video ID: $videoId")
+            logger.debug("Extracted Video ID: {}", videoId)
         }
 
         val preferredLang = getPreferredCaptionLanguage(videoUrl)
-        println("Preferred language determined by yt-dlp: $preferredLang")
+        logger.info("Preferred language determined by yt-dlp: {}", preferredLang)
 
         val transcriptText = fetchTranscript(videoUrl, preferredLang) ?: return null
 
-        println("\n--- Fetched Transcript (First 500 chars) ---")
-        println(
-            transcriptText.substring(0, minOf(transcriptText.length, 500)) +
-                    if (transcriptText.length > 500) "..." else ""
+        logger.debug("Fetched Transcript (First 500 chars): {}", 
+            transcriptText.take(500) + if (transcriptText.length > 500) "..." else ""
         )
 
         return summarizeTranscript(transcriptText)
@@ -120,7 +127,7 @@ class YouTubeTranscriptSummarizer : AutoCloseable {
             "--list-subs",
             videoUrl
         )
-        println("Executing yt-dlp command to list subtitles: ${command.joinToString(" ")}")
+        logger.debug("Executing yt-dlp command to list subtitles: {}", command.joinToString(" "))
 
         try {
             val processBuilder = ProcessBuilder(command)
@@ -134,19 +141,23 @@ class YouTubeTranscriptSummarizer : AutoCloseable {
             while (stdoutReader.readLine().also { line = it } != null) {
                 outputLines.add(line!!)
             }
-            println("yt-dlp --list-subs output:\n${outputLines.joinToString("\n")}")
+            if (logger.isDebugEnabled()) {
+                logger.debug("yt-dlp --list-subs output:\n{}", outputLines.joinToString("\n"))
+            }
 
             val errors = StringBuilder()
             while (stderrReader.readLine().also { line = it } != null) {
                 errors.append(line).append("\n")
             }
             if (errors.isNotBlank()) {
-                System.err.println("yt-dlp errors while listing subs:\n$errors")
+                logger.warn("yt-dlp errors while listing subs: {}", errors)
             }
 
             val exited = process.waitFor(30, TimeUnit.SECONDS)
             if (!exited || process.exitValue() != 0) {
-                System.err.println("yt-dlp --list-subs command failed or timed out. Exit code: ${if (exited) process.exitValue() else "TIMEOUT"}")
+                logger.error("yt-dlp --list-subs command failed or timed out. Exit code: {}", 
+                    if (exited) process.exitValue() else "TIMEOUT"
+                )
                 return@withContext DEFAULT_LANGUAGE // Default to English on failure
             }
 
@@ -204,17 +215,18 @@ class YouTubeTranscriptSummarizer : AutoCloseable {
                 if (langCode.endsWith(langCodeOriginalMarker, ignoreCase = true) ||
                     langName.contains(langNameOriginalMarker, ignoreCase = true)
                 ) {
-                    println("Found explicitly marked original language: Code='$langCode', Name='$langName'. Using code: '$langCode'")
+                    logger.debug("Found explicitly marked original language: Code='$langCode', Name='$langName'. Using code: '$langCode'")
                     return@withContext langCode // Return the full code like "be-orig"
                 }
             }
 
             // If no explicitly marked "original" caption was found after checking all lines
-            println("No explicitly marked '-orig' or '(Original)' captions found. Defaulting to English ('en').")
+            logger.debug("No explicitly marked '-orig' or '(Original)' captions found. Defaulting to English ('en').")
             return@withContext DEFAULT_LANGUAGE
 
         } catch (e: Exception) {
             System.err.println("Error executing or processing yt-dlp --list-subs: ${e.message}")
+            logger.error("Error executing or processing yt-dlp --list-subs: ${e.message}")
             e.printStackTrace()
             return@withContext DEFAULT_LANGUAGE // Default to English on error
         }
@@ -242,12 +254,13 @@ class YouTubeTranscriptSummarizer : AutoCloseable {
                 "--write-auto-subs",
                 "--sub-langs", lang,
                 "--convert-subs", "srt",
+                "--ffmpeg-location", ffmpegPath,
                 "--skip-download",
                 "-o", outputTemplate,
                 videoUrl
             )
 
-            println("Executing yt-dlp command to download/convert subtitles: ${command.joinToString(" ")}")
+            logger.debug("Executing yt-dlp command to download/convert subtitles: ${command.joinToString(" ")}")
             val actualExpectedFileWithLang = File(outputTemplate.replace("%(ext)s", "$lang.srt"))
             val actualExpectedFileGeneric = File(outputTemplate.replace("%(ext)s", "srt"))
 
@@ -259,13 +272,13 @@ class YouTubeTranscriptSummarizer : AutoCloseable {
                 val stderrReader = BufferedReader(InputStreamReader(process.errorStream))
 
                 var line: String?
-                println("yt-dlp download stdout:") // Differentiate from list-subs stdout
+                logger.debug("yt-dlp download stdout:") // Differentiate from list-subs stdout
                 while (stdoutReader.readLine().also { line = it } != null) {
                     println(line)
                 }
 
                 val errors = StringBuilder()
-                println("yt-dlp download stderr:") // Differentiate
+                logger.debug("yt-dlp download stderr:") // Differentiate
                 while (stderrReader.readLine().also { line = it } != null) {
                     println(line)
                     errors.append(line).append("\n")
@@ -276,6 +289,7 @@ class YouTubeTranscriptSummarizer : AutoCloseable {
                 if (!exited || process.exitValue() != 0) {
                     System.err.println("yt-dlp download process failed or timed out. Exit code: ${if (exited) process.exitValue() else "TIMEOUT"}")
                     System.err.println("yt-dlp download errors:\n$errors")
+                    logger.error("yt-dlp download errors:\n$errors")
                     actualExpectedFileWithLang.delete()
                     actualExpectedFileGeneric.delete()
                     File(outputTemplate.replace("%(ext)s", "$lang.vtt")).delete()
@@ -287,24 +301,23 @@ class YouTubeTranscriptSummarizer : AutoCloseable {
                     actualExpectedFileWithLang.exists() && actualExpectedFileWithLang.length() > 0 -> actualExpectedFileWithLang
                     actualExpectedFileGeneric.exists() && actualExpectedFileGeneric.length() > 0 -> actualExpectedFileGeneric
                     else -> {
-                        println("Expected SRT subtitle file not found or is empty after yt-dlp execution.")
-                        println("Checked for: ${actualExpectedFileWithLang.absolutePath}")
-                        println("Checked for: ${actualExpectedFileGeneric.absolutePath}")
+                        logger.debug("Expected SRT subtitle file not found or is empty after yt-dlp execution.")
+                        logger.debug("Checked for: ${actualExpectedFileWithLang.absolutePath}")
+                        logger.debug("Checked for: ${actualExpectedFileGeneric.absolutePath}")
                         File(outputTemplate.replace("%(ext)s", "$lang.vtt")).delete()
                         File(outputTemplate.replace("%(ext)s", "vtt")).delete()
                         return@withContext null
                     }
                 }
 
-                println("Reading transcript from: ${fileToRead.absolutePath}")
+                logger.debug("Downloaded captions to: {}", fileToRead.absolutePath)
                 val srtContent = fileToRead.readText(Charsets.UTF_8)
                 fileToRead.delete()
 
                 return@withContext parseSrtContent(srtContent)
 
             } catch (e: Exception) {
-                System.err.println("Error executing or processing yt-dlp download: ${e.message}")
-                e.printStackTrace()
+                logger.error("Error downloading captions: {}", e.message ?: "Unknown error", e)
                 return@withContext null
             } finally {
                 actualExpectedFileWithLang.delete()
@@ -343,7 +356,7 @@ class YouTubeTranscriptSummarizer : AutoCloseable {
      */
     private suspend fun summarizeTranscript(transcript: String): String? {
         if (transcript.isBlank()) {
-            println("Transcript is empty, cannot summarize.")
+            logger.debug("Transcript is empty, cannot summarize.")
             return null
         }
 
@@ -364,28 +377,28 @@ class YouTubeTranscriptSummarizer : AutoCloseable {
         )
 
         return try {
-            println("trace 1")
+            logger.debug("trace 1")
             val response = ktorHttpClient.post(apiUrl) {
                 contentType(ContentType.Application.Json)
                 setBody(requestBody)
             }
 
-            println("trace 2")
+            logger.debug("trace 2")
             if (!response.status.isSuccess()) {
                 val errorBody = response.body<String>()
-                println("Error from Gemini API: Status ${response.status}. Response: $errorBody")
+                logger.error("Error from Gemini API: Status ${response.status}. Response: $errorBody")
                 return null
             }
 
-            println("trace 3")
+            logger.debug("trace 3")
             val geminiResponse = response.body<GeminiResponse>()
             geminiResponse.candidates?.firstOrNull()?.extractText()?.trim()
                 ?: run {
-                    println("No summary content found in Gemini API response. Full: $geminiResponse")
+                    logger.debug("No summary content found in Gemini API response. Full: $geminiResponse")
                     null
                 }
         } catch (e: Exception) {
-            println("Error during Ktor call to Gemini API: ${e.message}")
+            logger.error("Error during Ktor call to Gemini API: ${e.message}")
             e.printStackTrace()
             null
         }
@@ -397,6 +410,10 @@ class YouTubeTranscriptSummarizer : AutoCloseable {
     override fun close() {
         ktorHttpClient.close()
     }
+
+    // Logging helper methods for backward compatibility
+    private fun log(message: String) = logger.info(message)
+    private fun logError(message: String, error: Throwable? = null) = logger.error(message, error = error)
 }
 
 /**
