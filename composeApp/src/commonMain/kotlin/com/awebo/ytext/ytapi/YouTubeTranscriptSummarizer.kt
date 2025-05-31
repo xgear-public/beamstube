@@ -27,7 +27,7 @@ import java.util.regex.Pattern
  */
 class YouTubeTranscriptSummarizer : AutoCloseable {
     companion object {
-        private const val YTDLP_COMMAND = "yt-dlp"
+        private const val YTDLP_COMMAND = "/opt/homebrew/bin/yt-dlp"
         private const val DEFAULT_LANGUAGE = "en"
     }
 
