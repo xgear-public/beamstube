@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -23,47 +24,49 @@ fun Summarize(
     videoTitle: String,
     onDismiss: () -> Unit,
 ) {
-    Column(
-        modifier.padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            text = videoTitle,
-            style = TextStyle(
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
+    SelectionContainer {
+        Column(
+            modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = videoTitle,
+                style = TextStyle(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp,
+                )
             )
-        )
-        Text(
-            modifier = Modifier.widthIn(min = 600.dp, max = 800.dp),
-            text = buildAnnotatedString {
-                val pattern = Regex("\\*\\*(.*?)\\*\\*")
-                var lastIndex = 0
+            Text(
+                modifier = Modifier.widthIn(min = 600.dp, max = 800.dp),
+                text = buildAnnotatedString {
+                    val pattern = Regex("\\*\\*(.*?)\\*\\*")
+                    var lastIndex = 0
 
-                pattern.findAll(summarizeText).forEach { matchResult ->
-                    // Add text before the match
-                    append(summarizeText.substring(lastIndex, matchResult.range.first))
+                    pattern.findAll(summarizeText).forEach { matchResult ->
+                        // Add text before the match
+                        append(summarizeText.substring(lastIndex, matchResult.range.first))
 
-                    // Add the matched text (without **) with bold style
-                    pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
-                    append(matchResult.groupValues[1])
-                    pop()
+                        // Add the matched text (without **) with bold style
+                        pushStyle(SpanStyle(fontWeight = FontWeight.Bold))
+                        append(matchResult.groupValues[1])
+                        pop()
 
-                    lastIndex = matchResult.range.last + 1
-                }
-                // Add remaining text
-                if (lastIndex < summarizeText.length) {
-                    append(summarizeText.substring(lastIndex))
-                }
-            },
-            style = TextStyle(
-                fontSize = 19.sp,
+                        lastIndex = matchResult.range.last + 1
+                    }
+                    // Add remaining text
+                    if (lastIndex < summarizeText.length) {
+                        append(summarizeText.substring(lastIndex))
+                    }
+                },
+                style = TextStyle(
+                    fontSize = 19.sp,
+                )
+
             )
-
-        )
-        Button(
-            onClick = { onDismiss() }) {
-            Text("Close")
+            Button(
+                onClick = { onDismiss() }) {
+                Text("Close")
+            }
         }
     }
 }
