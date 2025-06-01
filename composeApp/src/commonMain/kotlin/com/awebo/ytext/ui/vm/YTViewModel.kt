@@ -139,7 +139,7 @@ class YTViewModel(
             viewModelScope.launch {
                 withContext(Dispatchers.IO) {
                     YouTubeTranscriptSummarizer().use { summarizer ->
-                        val summarizedText = summarizer.summarizeVideo(video.id)
+                        val summarizedText = summarizer.summarizeVideo("https://www.youtube.com/watch?v=${video.id}")
                         isSummarizing = false
                         summarizedText?.let { text ->
                             _uiState.update { state ->
