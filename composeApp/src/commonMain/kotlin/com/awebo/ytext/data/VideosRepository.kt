@@ -193,7 +193,7 @@ class VideosRepository(
 
         val lastReload = miscDataStore.lastReload()
         println("lastReload: ${lastReload.toFormattedString()}")
-        miscDataStore.update(Instant.now())
+        miscDataStore.updateReloadTime(Instant.now())
 
         return loadAllTopics
     }

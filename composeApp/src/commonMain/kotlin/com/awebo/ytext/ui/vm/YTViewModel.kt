@@ -23,6 +23,7 @@ import ytext.composeapp.generated.resources.topics_updating
 class YTViewModel(
     private val videosRepository: VideosRepository,
     private val miscDataStore: MiscDataStore,
+    private val summarizer: YouTubeTranscriptSummarizer // This is a singleton
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUIState(emptyList()))
@@ -68,6 +69,10 @@ class YTViewModel(
                 _uiState.value = DashboardUIState(topics, miscDataStore.lastReload())
             }
         }
+    }
+
+    fun startSettings() {
+        _uiState.value = DashboardUIState(_uiState.value.topics, uiState = UiState.Settings)
     }
 
     fun startReorderTopics() {
@@ -129,35 +134,55 @@ class YTViewModel(
 
     private var isSummarizing = false
     fun onSummarize(video: Video) {
-        if (isSummarizing.not()) {
-            isSummarizing = true
-            _uiState.update { state ->
-                state.copy(
-                    uiState = UiState.Toast("Summarizing...")
-                )
-            }
-            viewModelScope.launch {
-                withContext(Dispatchers.IO) {
-                    YouTubeTranscriptSummarizer().use { summarizer ->
-                        val summarizedText = summarizer.summarizeVideo("https://www.youtube.com/watch?v=${video.id}")
-                        isSummarizing = false
-                        summarizedText?.let { text ->
-                            _uiState.update { state ->
-                                state.copy(
-                                    uiState = UiState.Summarize(text, video.title)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
+        if (isSummarizing) { // Check if already summarizing
             _uiState.update { state ->
                 state.copy(
                     uiState = UiState.Toast("Waiting for previous summarization to finish")
                 )
             }
+            return // Exit early
+        }
+
+        isSummarizing = true // Set flag before starting
+        _uiState.update { state ->
+            state.copy(
+                uiState = UiState.Toast("Summarizing...")
+            )
+        }
+
+        viewModelScope.launch {
+            try {
+                val summarizedText = withContext(Dispatchers.IO) {
+                    // Do NOT use summarizer.use { ... } here on the singleton instance.
+                    // This will allow the summarizer's HttpClient to remain open for subsequent calls.
+                    summarizer.summarizeVideo("https://www.youtube.com/watch?v=${video.id}")
+                }
+
+                if (summarizedText != null) {
+                    _uiState.update { state ->
+                        state.copy(
+                            uiState = UiState.Summarize(summarizedText, video.title)
+                        )
+                    }
+                } else {
+                    // Optionally handle the case where summarization returns null (e.g., failed)
+                    _uiState.update { state ->
+                        state.copy(
+                            uiState = UiState.Toast("Summarization failed.")
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                // It's good practice to log the exception and update UI accordingly
+                // logger.error("Error during summarization", e) // If you have a logger in ViewModel
+                _uiState.update { state ->
+                    state.copy(
+                        uiState = UiState.Toast("An error occurred during summarization.")
+                    )
+                }
+            } finally {
+                isSummarizing = false // Reset the flag in a finally block
+            }
         }
     }
-
 }

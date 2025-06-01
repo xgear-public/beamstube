@@ -11,6 +11,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.awebo.ytext.di.initKoin
 import com.awebo.ytext.ui.vm.DashboardUIState
 import com.awebo.ytext.ui.vm.ReorderViewModel
+import com.awebo.ytext.ui.vm.SettingsViewModel
 import com.awebo.ytext.ui.vm.UiState
 import com.awebo.ytext.ui.vm.YTViewModel
 import com.awebo.ytext.util.toFormattedString
@@ -44,6 +45,7 @@ fun main() = application {
             Summarize(uiState, viewModel)
             AddTopic(uiState, viewModel)
             Reorder(uiState, viewModel)
+            Settings(uiState, viewModel)
         }
     }
 }
@@ -126,11 +128,30 @@ private fun Alert(
     }
 }
 
+@Composable
+private fun Settings(
+    uiState: DashboardUIState,
+    viewModel: YTViewModel
+) {
+    SettingsWindow(
+        visible = uiState.uiState?.let { it is UiState.Settings } == true,
+        settingsViewModel = koinViewModel<SettingsViewModel>(),
+        onCloseRequest = {
+            viewModel.closeDialog()
+        }
+    )
+}
+
 
 @Composable
 private fun FrameWindowScope.Menu(viewModel: YTViewModel) {
     MenuBar {
         Menu("Actions", mnemonic = 'A') {
+            Item(
+                "Settings",
+                onClick = { viewModel.startSettings() },
+                shortcut = KeyShortcut(Key.S, meta = true)
+            )
             Item(
                 "Add Topic",
                 onClick = { viewModel.onAddTopicClick() },

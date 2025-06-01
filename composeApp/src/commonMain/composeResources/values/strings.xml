@@ -1,6 +1,7 @@
 <resources>
         <string name="topics_updating">Topics updating...</string>
         <string name="alert">Alert</string>
+        <string name="settings">Settings</string>
         <string name="video_summarization">Video summarization</string>
         <string name="add_topic">Add Topic</string>
         <string name="reorder_topics">Reorder Topics</string>

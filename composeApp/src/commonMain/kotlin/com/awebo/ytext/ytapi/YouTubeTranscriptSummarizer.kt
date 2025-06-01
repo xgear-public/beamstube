@@ -1,10 +1,10 @@
 package com.awebo.ytext.ytapi
 
 import YTExt.composeApp.BuildConfig
-import com.awebo.ytext.util.Logger
+import com.awebo.ytext.data.MiscDataStore
 import com.awebo.ytext.util.createLogger
 import io.ktor.client.*
-import io.ktor.client.call.body
+import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
@@ -16,10 +16,10 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.koin.compose.koinInject
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
-import java.nio.charset.Charset
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
@@ -27,7 +27,7 @@ import java.util.regex.Pattern
 /**
  * A class for summarizing YouTube video transcripts using yt-dlp and Google's Gemini API.
  */
-class YouTubeTranscriptSummarizer : AutoCloseable {
+class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore) : AutoCloseable {
     private val logger = createLogger(
         File(System.getProperty("user.home"), "Library/Logs/YouTubeams/debug.log")
     )
@@ -359,6 +359,7 @@ class YouTubeTranscriptSummarizer : AutoCloseable {
             logger.debug("Transcript is empty, cannot summarize.")
             return null
         }
+        val summarizationLanguageText = miscDataStore.getLanguage().summarizationLanguageText
 
         val modelName = "gemini-2.0-flash"
         val apiUrl =
@@ -366,7 +367,7 @@ class YouTubeTranscriptSummarizer : AutoCloseable {
         val promptText = """
             Please provide a concise and informative summary of the following video transcript.
             Focus on the main topics, key arguments, and any significant conclusions.
-            The output should be plain text in russian language.
+            The output should be plain text in $summarizationLanguageText language.
 
             Transcript:
             "$transcript"
@@ -419,25 +420,25 @@ class YouTubeTranscriptSummarizer : AutoCloseable {
 /**
  * Example usage of the YouTubeTranscriptSummarizer
  */
-fun main() = runBlocking {
-    YouTubeTranscriptSummarizer().use { summarizer ->
-        println("Enter YouTube video URL:")
-        val videoUrl = "https://www.youtube.com/watch?v=ohyK_2XoYOw"
-
-        if (videoUrl.isBlank()) {
-            println("No URL provided. Exiting.")
-            return@use
-        }
-
-        val summary = summarizer.summarizeVideo(videoUrl)
-        if (summary != null) {
-            println("\n--- Summarized Transcript ---")
-            println(summary)
-        } else {
-            println("Failed to generate summary for the video.")
-        }
-    }
-}
+//fun main() = runBlocking {
+//    YouTubeTranscriptSummarizer().use { summarizer ->
+//        println("Enter YouTube video URL:")
+//        val videoUrl = "https://www.youtube.com/watch?v=ohyK_2XoYOw"
+//
+//        if (videoUrl.isBlank()) {
+//            println("No URL provided. Exiting.")
+//            return@use
+//        }
+//
+//        val summary = summarizer.summarizeVideo(videoUrl)
+//        if (summary != null) {
+//            println("\n--- Summarized Transcript ---")
+//            println(summary)
+//        } else {
+//            println("Failed to generate summary for the video.")
+//        }
+//    }
+//}
 
 // --- Gemini API Data Classes ---
 @Serializable
