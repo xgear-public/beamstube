@@ -83,6 +83,10 @@ class YTViewModel(
         _uiState.value = DashboardUIState(_uiState.value.topics, uiState = UiState.AddTopic)
     }
 
+    fun onHistoryClick() {
+        _uiState.value = DashboardUIState(_uiState.value.topics, uiState = UiState.History)
+    }
+
     fun closeDialog() {
         _uiState.update { state ->
             state.copy(uiState = null)

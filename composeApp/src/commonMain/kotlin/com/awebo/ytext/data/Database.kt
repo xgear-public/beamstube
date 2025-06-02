@@ -9,6 +9,7 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import java.time.Duration
 import java.time.Instant
 
@@ -74,6 +75,9 @@ interface VideoDao {
 
     @Query("UPDATE video SET watched = 1 WHERE id IN (:videoIds)")
     suspend fun markVideosAsWatched(videoIds: List<String>)
+
+    @Query("SELECT * FROM video WHERE watched = 1 AND publishedAt >= :timestamp")
+    fun getWatchedVideosLastNDays(timestamp: Long): Flow<List<VideoEntity>>
 
 
 

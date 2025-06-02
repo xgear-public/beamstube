@@ -1,6 +1,7 @@
 package com.awebo.ytext.di
 
 import com.awebo.ytext.data.*
+import com.awebo.ytext.ui.vm.HistoryViewModel
 import com.awebo.ytext.ui.vm.ReorderViewModel
 import com.awebo.ytext.ui.vm.SettingsViewModel
 import com.awebo.ytext.ui.vm.YTViewModel
@@ -27,5 +28,6 @@ val appModule = module {
     viewModelOf(::YTViewModel)
     viewModelOf(::ReorderViewModel)
     viewModelOf(::SettingsViewModel)
+    viewModelOf(::HistoryViewModel)
 
 }

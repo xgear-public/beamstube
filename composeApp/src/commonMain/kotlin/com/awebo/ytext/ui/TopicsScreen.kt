@@ -20,8 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -29,12 +27,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import coil3.compose.rememberAsyncImagePainter
-import coil3.request.ImageRequest
 import com.awebo.ytext.model.Topic
 import com.awebo.ytext.model.Video
-import com.awebo.ytext.util.toFormattedString
 import com.awebo.ytext.ui.vm.YTViewModel
+import com.awebo.ytext.util.toFormattedString
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import java.time.Duration
 import java.time.Instant
@@ -82,72 +78,95 @@ fun Topic(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(items = topic.videos, key = { video -> video.id }) { video ->
-            Column(
-                modifier = Modifier.width(250.dp).clickable { onVideoClick(video.id) },
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    AsyncImage(
-                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)),
-                        model = video.thumbnailUrl,
-                        contentDescription = null
-                    )
-                    IconButton(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd),
-                        onClick = { onVideoRemove(topic, video) }) {
-                        Icon(
-                            rememberVectorPainter(image = Icons.Filled.Delete),
-                            contentDescription = "Remove video",
-                            tint = Color.White
-                        )
-                    }
-                    IconButton(
-                        modifier = Modifier
-                            .align(Alignment.BottomStart),
-                        onClick = { onSummarize(video) }) {
-                        Icon(
-                            rememberVectorPainter(image = Icons.Filled.Info),
-                            contentDescription = "Remove video",
-                            tint = Color.hsv(217f, 0.68f, 1.00f),
-                        )
-                    }
-                }
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        modifier = Modifier.align(Alignment.TopStart),
-                        text = video.publishedAt.toFormattedString(),
-                        style = TextStyle(
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold
-                        ),
-                        textAlign = TextAlign.Start
-                    )
-                    Text(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .background(Color.Red)
-                            .padding(horizontal = 4.dp),
-                        text = video.duration.toFormattedString(),
-                        style = TextStyle(
-                            fontSize = 22.sp,
-                            color = Color.White,
-                        ),
-                        textAlign = TextAlign.Start
+            VideoItem(
+                video = video,
+                onVideoClick = onVideoClick,
+                onVideoRemove = onVideoRemove,
+                topic = topic,
+                onSummarize = onSummarize
+            )
+        }
+    }
+}
+
+
+@Composable
+fun VideoItem(
+    video: Video,
+    onVideoClick: (String) -> Unit,
+    onVideoRemove: ((Topic, Video) -> Unit)? = null,
+    onSummarize: ((Video) -> Unit)? = null,
+    topic: Topic? = null,
+) {
+    Column(
+        modifier = Modifier.width(250.dp).clickable { onVideoClick(video.id) },
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Box(modifier = Modifier.width(250.dp)) {
+            AsyncImage(
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)),
+                model = video.thumbnailUrl,
+                contentDescription = null
+            )
+            if (topic != null) {
+                IconButton(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd),
+                    onClick = { onVideoRemove?.invoke(topic, video) }) {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = "Remove video",
+                        tint = Color.White
                     )
                 }
-                Text(
-                    text = video.title,
-                    style = TextStyle(
-                        lineHeight = 16.sp,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    textAlign = TextAlign.Start,
-                    maxLines = 4,
-                )
+            }
+            if (onSummarize != null) {
+                IconButton(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart),
+                    onClick = { onSummarize(video) }) {
+                    Icon(
+                        imageVector = Icons.Filled.Info,
+                        contentDescription = "Summarize video",
+                        tint = Color.hsv(217f, 0.68f, 1.00f),
+                    )
+                }
             }
         }
+        Box(modifier = Modifier.width(250.dp)) {
+            Text(
+                modifier = Modifier.align(Alignment.TopStart),
+                text = video.publishedAt.toFormattedString(),
+                style = TextStyle(
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
+                ),
+                textAlign = TextAlign.Start
+            )
+            Text(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .background(Color.Red)
+                    .padding(horizontal = 4.dp),
+                text = video.duration.toFormattedString(),
+                style = TextStyle(
+                    fontSize = 22.sp,
+                    color = Color.White,
+                ),
+                textAlign = TextAlign.Start
+            )
+        }
+        Text(
+            modifier = Modifier.width(250.dp),
+            text = video.title,
+            style = TextStyle(
+                lineHeight = 16.sp,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            ),
+            textAlign = TextAlign.Start,
+            maxLines = 4,
+        )
     }
 }
 

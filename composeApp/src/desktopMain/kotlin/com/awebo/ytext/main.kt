@@ -10,6 +10,7 @@ import androidx.compose.ui.window.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.awebo.ytext.di.initKoin
 import com.awebo.ytext.ui.vm.DashboardUIState
+import com.awebo.ytext.ui.vm.HistoryViewModel
 import com.awebo.ytext.ui.vm.ReorderViewModel
 import com.awebo.ytext.ui.vm.SettingsViewModel
 import com.awebo.ytext.ui.vm.UiState
@@ -46,6 +47,7 @@ fun main() = application {
             AddTopic(uiState, viewModel)
             Reorder(uiState, viewModel)
             Settings(uiState, viewModel)
+            History(uiState, viewModel)
         }
     }
 }
@@ -129,6 +131,22 @@ private fun Alert(
 }
 
 @Composable
+private fun History(
+    uiState: DashboardUIState,
+    viewModel: YTViewModel
+) {
+    HistoryWindow(
+        visible = uiState.uiState?.let { it is UiState.History } == true,
+        historyViewModel = koinViewModel<HistoryViewModel>(),
+        onVideoClick = { videoId ->
+            viewModel.onVideoClick(videoId)
+        }
+    ) {
+        viewModel.closeDialog()
+    }
+}
+
+@Composable
 private fun Settings(
     uiState: DashboardUIState,
     viewModel: YTViewModel
@@ -166,6 +184,11 @@ private fun FrameWindowScope.Menu(viewModel: YTViewModel) {
                 "Reorder Topics",
                 onClick = { viewModel.startReorderTopics() },
                 shortcut = KeyShortcut(Key.O, meta = true)
+            )
+            Item(
+                "History",
+                onClick = { viewModel.onHistoryClick() },
+                shortcut = KeyShortcut(Key.Y, meta = true)
             )
         }
     }

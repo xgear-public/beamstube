@@ -13,6 +13,7 @@ sealed class UiState{
     data object Reorder : UiState()
     data object AddTopic : UiState()
     data object Settings : UiState()
+    data object History : UiState()
     data class Toast(val message: String) : UiState()
     data class Summarize(val text: String, val videoTitle: String) : UiState()
 }

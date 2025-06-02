@@ -4,6 +4,10 @@ import androidx.compose.ui.graphics.Color
 import com.awebo.ytext.model.*
 import com.awebo.ytext.util.toFormattedString
 import com.awebo.ytext.ytapi.WEEK_IN_SECONDS
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import java.time.Instant
 
 class VideosRepository(
@@ -289,6 +293,14 @@ class VideosRepository(
             is TopicUpdateRequest ->
                 updateTopic(changeRequest.topicId, changeRequest.channels)
         }
+    }
+
+    fun getWatchedVideosLast3Days(): Flow<List<Video>> {
+        val timestamp = Instant.now().minus(3, java.time.temporal.ChronoUnit.DAYS).toEpochMilli()
+
+        return videoDao
+            .getWatchedVideosLastNDays(timestamp)
+            .map { it.map(Video.Companion::fromEntity) }
     }
 
     companion object {
