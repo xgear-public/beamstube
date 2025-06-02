@@ -76,7 +76,7 @@ interface VideoDao {
     @Query("UPDATE video SET watched = 1 WHERE id IN (:videoIds)")
     suspend fun markVideosAsWatched(videoIds: List<String>)
 
-    @Query("SELECT * FROM video WHERE watched = 1 AND publishedAt >= :timestamp")
+    @Query("SELECT * FROM video WHERE watched = 1 AND publishedAt >= :timestamp ORDER BY publishedAt DESC")
     fun getWatchedVideosLastNDays(timestamp: Long): Flow<List<VideoEntity>>
 
 
