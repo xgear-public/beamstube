@@ -195,7 +195,8 @@ private fun FrameWindowScope.Menu(viewModel: YTViewModel) {
 }
 
 fun setupMacAboutMenu() {
-    if (Desktop.isDesktopSupported()) {
+    val os = System.getProperty("os.name").lowercase()
+    if (Desktop.isDesktopSupported() && os.contains("mac")) {
         val desktop = Desktop.getDesktop()
         if (desktop.isSupported(Desktop.Action.APP_ABOUT)) {
             desktop.setAboutHandler {

@@ -146,6 +146,12 @@ compose.desktop {
                 bundleID = "com.awebo.ytext"
                 iconFile.set(iconsRoot.resolve("YTExt.icns"))
             }
+            linux {
+                iconFile.set(iconsRoot.resolve("YTExt.png"))
+            }
+            windows {
+                iconFile.set(iconsRoot.resolve("YTExt.ico"))
+            }
             buildTypes.release.proguard {
                 version.set("7.3.2")
                 configurationFiles.from(project.file("proguard-rules.pro"))

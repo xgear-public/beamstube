@@ -1,4 +1,4 @@
-name: Build YTExt -> dmg
+name: Build YTExt
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
         id: set-version
         run: echo "version=$(date +'%d.%m.%Y')" >> $GITHUB_OUTPUT
 
-  build-macos-app:
+  build-macos:
     needs: generate-version
     runs-on: macos-latest
 
@@ -63,6 +63,57 @@ jobs:
       - name: Upload macOS .dmg Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ytext-${{ github.ref_name }}-${{ steps.date.outputs.date }}.dmg
+          name: ytext-macos-${{ github.ref_name }}-${{ steps.date.outputs.date }}.dmg
           path: composeApp/build/compose/binaries/main/dmg/*.dmg
+          retention-days: 1
+
+  build-linux:
+    needs: generate-version
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 17
+          cache: 'gradle'
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.gradle/daemon
+            ~/.gradle/native
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Install required packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fakeroot
+      - name: Build Linux DEB package
+        env:
+          GOOGLE_AI_STUDIO_API_KEY: ${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}
+          YT_APP_NAME: ${{ secrets.YT_APP_NAME }}
+          YT_DATA_API_V3_KEY: ${{ secrets.YT_DATA_API_V3_KEY }}
+          APP_VERSION: ${{ needs.generate-version.outputs.app-version }}
+        run: |
+          ./gradlew packageDeb -PreleaseBuild=true -Pversion=${{ needs.generate-version.outputs.app-version }} --build-cache --configuration-cache --parallel
+      - name: Get current timestamp
+        id: date
+        run: echo "date=$(date -u +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
+      - name: Upload Linux .deb Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ytext-linux-${{ github.ref_name }}-${{ steps.date.outputs.date }}.deb
+          path: composeApp/build/compose/binaries/main/deb/*.deb
           retention-days: 1
