@@ -29,7 +29,18 @@ import java.util.regex.Pattern
  */
 class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore) : AutoCloseable {
     private val logger = createLogger(
-        File(System.getProperty("user.home"), "Library/Logs/YouTubeams/debug.log")
+        when (System.getProperty("os.name", "").lowercase()) {
+            "win" -> {
+                val appData = System.getenv("LOCALAPPDATA") ?: System.getProperty("user.home", "")
+                File("$appData/YouTubeams/logs/debug.log")
+            }
+            "mac" -> {
+                File(System.getProperty("user.home"), "Library/Logs/YouTubeams/debug.log")
+            }
+            else -> { // Linux and other Unix-like systems
+                File(System.getProperty("user.home"), ".local/share/YouTubeams/logs/debug.log")
+            }
+        }.also { it.parentFile?.mkdirs() }
     )
 
     companion object {
