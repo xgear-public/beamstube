@@ -303,6 +303,14 @@ class VideosRepository(
             .map { it.map(Video.Companion::fromEntity) }
     }
 
+    suspend fun getSummarization(videoId: String, language: String): SummarizationEntity? {
+        return videoDao.getSummarization(videoId, language)
+    }
+
+    suspend fun saveSummarization(summarization: SummarizationEntity) {
+        videoDao.insertSummarization(summarization)
+    }
+
     companion object {
         private const val MINUTES_TTL = 30L // 30 minutes cache TTL
         private const val DUMMY_ID = 0L

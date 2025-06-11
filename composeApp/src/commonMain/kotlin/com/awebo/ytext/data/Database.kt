@@ -19,11 +19,11 @@ import java.time.Instant
  *
  * 1 - initial state
  * 2 - add sourcePlatform to video and channel tables
- * 
- */
+ * 3 - add summarization table
+ * */
 @Database(
-    entities = [VideoEntity::class, ChannelEntity::class, TopicEntity::class],
-    version = 2
+    entities = [VideoEntity::class, ChannelEntity::class, TopicEntity::class, SummarizationEntity::class],
+    version = 3
 )
 @TypeConverters(InstantTypeConverter::class, ColorTypeConverter::class, DurationTypeConverter::class)
 @ConstructedBy(AppDatabaseConstructor::class)
@@ -41,7 +41,7 @@ fun getRoomDatabase(
     builder: RoomDatabase.Builder<AppDatabase>
 ): AppDatabase {
     return builder
-        .addMigrations(MIGRATION_1_2)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
 //        .fallbackToDestructiveMigrationOnDowngrade()
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
@@ -79,6 +79,12 @@ interface VideoDao {
     @Query("SELECT * FROM video WHERE watched = 1 AND publishedAt >= :timestamp ORDER BY publishedAt DESC")
     fun getWatchedVideosLastNDays(timestamp: Long): Flow<List<VideoEntity>>
 
+    // summarization methods
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSummarization(summarization: SummarizationEntity)
+
+    @Query("SELECT * FROM summarization WHERE videoId = :videoId AND language = :language")
+    suspend fun getSummarization(videoId: String, language: String): SummarizationEntity?
 
 
     // channel methods
@@ -102,7 +108,7 @@ interface VideoDao {
 
     @Query("DELETE FROM channel WHERE id IN (:channelIds)")
     suspend fun deleteChannels(channelIds: List<String>)
-    
+
     @Query("DELETE FROM channel WHERE topicId = :topicId")
     suspend fun deleteChannelsByTopicId(topicId: Long)
 
@@ -189,6 +195,24 @@ data class TopicEntity(
     val order: Int
 )
 
+@Entity(
+    tableName = "summarization",
+    foreignKeys = [
+        ForeignKey(
+            entity = VideoEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["videoId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
+)
+data class SummarizationEntity(
+    @PrimaryKey val videoId: String,
+    val summaryText: String,
+    val language: String,
+    val timestamp: Instant
+)
+
 
 data class ChannelVideos(
     @Embedded
@@ -215,7 +239,7 @@ data class TopicChannelsWithVideos(
 
 private val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(connection: SQLiteConnection) {
-                // Add sourcePlatform column to video table with default value 'YOUTUBE'
+        // Add sourcePlatform column to video table with default value 'YOUTUBE'
         connection.execSQL("""
             ALTER TABLE video 
             ADD COLUMN sourcePlatform TEXT NOT NULL DEFAULT 'YOUTUBE'
@@ -228,6 +252,21 @@ private val MIGRATION_1_2 = object : Migration(1, 2) {
         """.trimIndent())
     }
 
+}
+
+private val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("""
+            CREATE TABLE IF NOT EXISTS `summarization` (
+                `videoId` TEXT NOT NULL,
+                `summaryText` TEXT NOT NULL,
+                `language` TEXT NOT NULL,
+                `timestamp` INTEGER NOT NULL,
+                PRIMARY KEY(`videoId`),
+                FOREIGN KEY(`videoId`) REFERENCES `video`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+            )
+        """.trimIndent())
+    }
 }
 
 class InstantTypeConverter {

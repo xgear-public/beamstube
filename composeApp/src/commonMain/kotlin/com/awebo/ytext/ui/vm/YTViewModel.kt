@@ -3,6 +3,7 @@ package com.awebo.ytext.ui.vm
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.awebo.ytext.data.MiscDataStore
+import com.awebo.ytext.data.SummarizationEntity
 import com.awebo.ytext.data.VideosRepository
 import com.awebo.ytext.model.Topic
 import com.awebo.ytext.model.TopicChangeRequest
@@ -19,6 +20,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.getString
 import ytext.composeapp.generated.resources.Res
 import ytext.composeapp.generated.resources.topics_updating
+import java.time.Instant
 
 class YTViewModel(
     private val videosRepository: VideosRepository,
@@ -156,24 +158,47 @@ class YTViewModel(
 
         viewModelScope.launch {
             try {
-                val summarizedText = withContext(Dispatchers.IO) {
-                    // Do NOT use summarizer.use { ... } here on the singleton instance.
-                    // This will allow the summarizer's HttpClient to remain open for subsequent calls.
-                    summarizer.summarizeVideo("https://www.youtube.com/watch?v=${video.id}")
+                // Check cache first
+                val languageCode = miscDataStore.getLanguage().code
+                val cachedSummary = withContext(Dispatchers.IO) {
+                    videosRepository.getSummarization(video.id, languageCode)
                 }
 
-                if (summarizedText != null) {
+                if (cachedSummary != null) {
                     _uiState.update { state ->
                         state.copy(
-                            uiState = UiState.Summarize(summarizedText, video.title)
+                            uiState = UiState.Summarize(cachedSummary.summaryText, video.title)
                         )
                     }
                 } else {
-                    // Optionally handle the case where summarization returns null (e.g., failed)
-                    _uiState.update { state ->
-                        state.copy(
-                            uiState = UiState.Toast("Summarization failed.")
-                        )
+                    val summarizedText = withContext(Dispatchers.IO) {
+                        summarizer.summarizeVideo("https://www.youtube.com/watch?v=${video.id}")
+                    }
+
+                    if (summarizedText != null) {
+                        // Save to cache
+                        withContext(Dispatchers.IO) {
+                            videosRepository.saveSummarization(
+                                SummarizationEntity(
+                                    videoId = video.id,
+                                    summaryText = summarizedText,
+                                    language = languageCode,
+                                    timestamp = Instant.now()
+                                )
+                            )
+                        }
+                        _uiState.update { state ->
+                            state.copy(
+                                uiState = UiState.Summarize(summarizedText, video.title)
+                            )
+                        }
+                    } else {
+                        // Optionally handle the case where summarization returns null (e.g., failed)
+                        _uiState.update { state ->
+                            state.copy(
+                                uiState = UiState.Toast("Summarization failed.")
+                            )
+                        }
                     }
                 }
             } catch (e: Exception) {
