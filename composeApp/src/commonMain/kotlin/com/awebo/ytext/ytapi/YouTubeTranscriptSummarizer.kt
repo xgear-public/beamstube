@@ -20,6 +20,7 @@ import org.koin.compose.koinInject
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
@@ -29,18 +30,7 @@ import java.util.regex.Pattern
  */
 class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore) : AutoCloseable {
     private val logger = createLogger(
-        when (System.getProperty("os.name", "").lowercase()) {
-            "win" -> {
-                val appData = System.getenv("LOCALAPPDATA") ?: System.getProperty("user.home", "")
-                File("$appData/YouTubeams/logs/debug.log")
-            }
-            "mac" -> {
-                File(System.getProperty("user.home"), "Library/Logs/YouTubeams/debug.log")
-            }
-            else -> { // Linux and other Unix-like systems
-                File(System.getProperty("user.home"), ".local/share/YouTubeams/logs/debug.log")
-            }
-        }.also { it.parentFile?.mkdirs() }
+        File(System.getProperty("user.home"), "Library/Logs/YouTubeams/debug.log")
     )
 
     companion object {
@@ -85,7 +75,7 @@ class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore) : AutoClosea
 
         val transcriptText = fetchTranscript(videoUrl, preferredLang) ?: return null
 
-        logger.debug("Fetched Transcript (First 500 chars): {}", 
+        logger.debug("Fetched Transcript (First 500 chars): {}",
             transcriptText.take(500) + if (transcriptText.length > 500) "..." else ""
         )
 
@@ -166,7 +156,7 @@ class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore) : AutoClosea
 
             val exited = process.waitFor(30, TimeUnit.SECONDS)
             if (!exited || process.exitValue() != 0) {
-                logger.error("yt-dlp --list-subs command failed or timed out. Exit code: {}", 
+                logger.error("yt-dlp --list-subs command failed or timed out. Exit code: {}",
                     if (exited) process.exitValue() else "TIMEOUT"
                 )
                 return@withContext DEFAULT_LANGUAGE // Default to English on failure
@@ -183,8 +173,7 @@ class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore) : AutoClosea
                 // Detect the start of subtitle listing.
                 // It could be a header like "Language Name Formats" or section start like "[info] Available ... captions"
                 if (trimmedLine.startsWith("Language Name", ignoreCase = true) ||
-                    trimmedLine.startsWith("[info] Available automatic captions for", ignoreCase = true) ||
-                    trimmedLine.startsWith("[info] Available subtitles for", ignoreCase = true)
+                    trimmedLine.startsWith("[info] Available automatic captions for", ignoreCase = true)
                 ) {
                     subtitlesSectionStarted = true
                     continue // Skip this header line
@@ -229,6 +218,34 @@ class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore) : AutoClosea
                     logger.debug("Found explicitly marked original language: Code='$langCode', Name='$langName'. Using code: '$langCode'")
                     return@withContext langCode // Return the full code like "be-orig"
                 }
+            }
+
+            subtitlesSectionStarted = false
+
+            for (outputLine in outputLines) {
+                val trimmedLine = outputLine.trim()
+
+                // Detect the start of subtitle listing.
+                // It could be a header like "Language Name Formats" or section start like "[info] Available ... captions"
+                if (
+                    trimmedLine.startsWith("[info] Available subtitles for", ignoreCase = true)
+                ) {
+                    subtitlesSectionStarted = true
+                    continue // Skip this header line
+                }
+
+                if (!subtitlesSectionStarted || trimmedLine.isEmpty() || trimmedLine.startsWith("[")) {
+                    continue // Skip lines before section starts, empty lines, or other [info] lines
+                }
+
+                val parts = trimmedLine.split(Regex("\\s+"), limit = 2) // Split lang code from the rest
+                if (parts.size < 2) {
+                    continue // Not a valid subtitle line
+                }
+
+                val langCode = parts[0]
+                if (isLanguageCode(langCode))
+                    return@withContext langCode
             }
 
             // If no explicitly marked "original" caption was found after checking all lines
@@ -414,6 +431,12 @@ class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore) : AutoClosea
             e.printStackTrace()
             null
         }
+    }
+
+    fun isLanguageCode(code: String): Boolean {
+        // Get all 2-letter ISO language codes.
+        val languageCodes = Locale.getISOLanguages()
+        return languageCodes.contains(code.lowercase())
     }
 
     /**
