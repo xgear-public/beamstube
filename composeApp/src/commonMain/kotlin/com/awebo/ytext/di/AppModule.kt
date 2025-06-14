@@ -1,6 +1,7 @@
 package com.awebo.ytext.di
 
 import com.awebo.ytext.data.*
+import com.awebo.ytext.news.NewsLoader
 import com.awebo.ytext.ui.vm.HistoryViewModel
 import com.awebo.ytext.ui.vm.ReorderViewModel
 import com.awebo.ytext.ui.vm.SettingsViewModel
@@ -17,6 +18,7 @@ val appModule = module {
     single<MiscDataStore> { MiscDataStoreFactory().createMiscDataStore() }
     single<YouTubeTranscriptSummarizer> { YouTubeTranscriptSummarizer(miscDataStore = get()) }
     single<Map<VideoPlatform, VideoDataSource>> { mapOf(VideoPlatform.YOUTUBE to YTDataSource()) }
+    single<NewsLoader> { NewsLoader() }
 
     single {
         VideosRepository(

@@ -190,6 +190,11 @@ private fun FrameWindowScope.Menu(viewModel: YTViewModel) {
                 onClick = { viewModel.onHistoryClick() },
                 shortcut = KeyShortcut(Key.Y, meta = true)
             )
+            Item(
+                "History",
+                onClick = { viewModel.onNewsClick() },
+                shortcut = KeyShortcut(Key.N, meta = true)
+            )
         }
     }
 }

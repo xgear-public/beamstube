@@ -8,6 +8,7 @@ import com.awebo.ytext.data.VideosRepository
 import com.awebo.ytext.model.Topic
 import com.awebo.ytext.model.TopicChangeRequest
 import com.awebo.ytext.model.Video
+import com.awebo.ytext.news.NewsLoader
 import com.awebo.ytext.openUrl
 import com.awebo.ytext.ytapi.YouTubeTranscriptSummarizer
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +26,7 @@ import java.time.Instant
 class YTViewModel(
     private val videosRepository: VideosRepository,
     private val miscDataStore: MiscDataStore,
+    private val newsLoader: NewsLoader,
     private val summarizer: YouTubeTranscriptSummarizer // This is a singleton
 ) : ViewModel() {
 
@@ -87,6 +89,58 @@ class YTViewModel(
 
     fun onHistoryClick() {
         _uiState.value = DashboardUIState(_uiState.value.topics, uiState = UiState.History)
+    }
+
+    private var isNewsLoading = false
+    fun onNewsClick() {
+        if (isNewsLoading) { // Check if already summarizing
+            _uiState.update { state ->
+                state.copy(
+                    uiState = UiState.Toast("Waiting for news loading")
+                )
+            }
+            return // Exit early
+        }
+
+        isNewsLoading = true // Set flag before starting
+        _uiState.update { state ->
+            state.copy(
+                uiState = UiState.Toast("News loading...")
+            )
+        }
+
+        viewModelScope.launch {
+            try {
+                val newsText = withContext(Dispatchers.IO) {
+                    newsLoader.loadNews()
+                }
+
+                if (newsText != null) {
+                    _uiState.update { state ->
+                        state.copy(
+                            uiState = UiState.Summarize(newsText, "Reform.news")
+                        )
+                    }
+                } else {
+                    // Optionally handle the case where summarization returns null (e.g., failed)
+                    _uiState.update { state ->
+                        state.copy(
+                            uiState = UiState.Toast("News loading failed.")
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                // It's good practice to log the exception and update UI accordingly
+                // logger.error("Error during summarization", e) // If you have a logger in ViewModel
+                _uiState.update { state ->
+                    state.copy(
+                        uiState = UiState.Toast("An error occurred during news loading.")
+                    )
+                }
+            } finally {
+                isNewsLoading = false // Reset the flag in a finally block
+            }
+        }
     }
 
     fun closeDialog() {
