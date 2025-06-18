@@ -2,6 +2,7 @@ package com.awebo.ytext.ytapi
 
 import YTExt.composeApp.BuildConfig
 import com.awebo.ytext.data.MiscDataStore
+import com.awebo.ytext.util.Logger
 import com.awebo.ytext.util.createLogger
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -28,10 +29,7 @@ import java.util.regex.Pattern
 /**
  * A class for summarizing YouTube video transcripts using yt-dlp and Google's Gemini API.
  */
-class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore) : AutoCloseable {
-    private val logger = createLogger(
-        File(System.getProperty("user.home"), "Library/Logs/YouTubeams/debug.log")
-    )
+class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore, private val logger: Logger) : AutoCloseable {
 
     companion object {
         private const val FFMPEG_PATH = "/opt/homebrew/bin/ffmpeg"
@@ -446,9 +444,6 @@ class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore) : AutoClosea
         ktorHttpClient.close()
     }
 
-    // Logging helper methods for backward compatibility
-    private fun log(message: String) = logger.info(message)
-    private fun logError(message: String, error: Throwable? = null) = logger.error(message, error = error)
 }
 
 /**
