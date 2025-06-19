@@ -22,7 +22,7 @@ val appModule = module {
     single<Logger> { DefaultLogger(File(System.getProperty("user.home"), "Library/Logs/YouTubeams/debug.log")) }
     single<YouTubeTranscriptSummarizer> { YouTubeTranscriptSummarizer(miscDataStore = get(), logger = get()) }
     single<Map<VideoPlatform, VideoDataSource>> { mapOf(VideoPlatform.YOUTUBE to YTDataSource()) }
-    single<NewsLoader> { NewsLoader() }
+    single<NewsLoader> { NewsLoader(logger = get()) }
 
     single {
         VideosRepository(

@@ -1,5 +1,6 @@
 package com.awebo.ytext.news
 
+import com.awebo.ytext.util.Logger
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
@@ -12,7 +13,7 @@ import kotlinx.serialization.json.Json
 @Serializable
 private data class NewsAnalysis(val analysis: String)
 
-class NewsLoader {
+class NewsLoader(private val logger: Logger) {
 
     private val client = HttpClient(CIO) {
         install(ContentNegotiation) {
@@ -29,12 +30,14 @@ class NewsLoader {
      */
     suspend fun loadNews(): String? {
         val url = "https://newser-service-272335850871.us-central1.run.app/analyze"
+        logger.info("Fetching news analysis from: {}", url)
         return try {
             val response = client.get(url)
             val newsAnalysis = response.body<NewsAnalysis>()
+            logger.info("Successfully fetched and parsed news analysis.")
             newsAnalysis.analysis
         } catch (e: Exception) {
-            println("Error loading news: ${e.message}")
+            logger.error("Error loading news", error = e)
             null
         }
     }
