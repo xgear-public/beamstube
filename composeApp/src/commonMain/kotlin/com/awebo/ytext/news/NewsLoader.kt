@@ -4,6 +4,7 @@ import com.awebo.ytext.util.Logger
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.serialization.kotlinx.json.*
@@ -16,6 +17,11 @@ private data class NewsAnalysis(val analysis: String)
 class NewsLoader(private val logger: Logger) {
 
     private val client = HttpClient(CIO) {
+        install(HttpTimeout) {
+            requestTimeoutMillis = 25000 // 25 seconds
+            connectTimeoutMillis = 5000  // 5 seconds
+            socketTimeoutMillis = 10000  // 10 seconds
+        }
         install(ContentNegotiation) {
             json(Json {
                 ignoreUnknownKeys = true
