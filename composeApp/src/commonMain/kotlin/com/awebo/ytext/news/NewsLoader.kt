@@ -5,24 +5,30 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.HttpRequestRetry // Import HttpRequestRetry
+import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import java.io.IOException // Import IOException for specific retry condition
+import java.io.IOException
+import java.net.ConnectException // Import specific exceptions for clarity
+import java.net.SocketTimeoutException
 
 @Serializable
 private data class NewsAnalysis(val analysis: String)
 
 class NewsLoader(private val logger: Logger) {
 
+    // Make URL a constant or load from config
+    private val NEWS_ANALYSIS_URL = "https://newser-service-272335850871.us-central1.run.app/analyze"
+
     private val client = HttpClient(CIO) {
         install(HttpTimeout) {
-            requestTimeoutMillis = 25000 // 25 seconds
-            connectTimeoutMillis = 25000  // 5 seconds
-            socketTimeoutMillis = 25000  // 10 seconds
+            // Adjusted timeouts for more typical behavior
+            requestTimeoutMillis = 25000 // Overall request time
+            connectTimeoutMillis = 5000  // Time to establish connection
+            socketTimeoutMillis = 15000  // Inactivity time during data transfer
         }
         install(ContentNegotiation) {
             json(Json {
@@ -30,21 +36,15 @@ class NewsLoader(private val logger: Logger) {
                 isLenient = true
             })
         }
-        // Install HttpRequestRetry plugin
         install(HttpRequestRetry) {
-            // Retry up to 3 times on exceptions
-            // By default, it retries on 5xx server errors and network issues.
-            // We can customize which exceptions to retry on.
-            // EOFException is a subclass of IOException.
-            retryOnExceptionIf { _, cause ->
-                cause is IOException // Retry on any IOException, including EOFException
-            }
-            // Configure the number of retries
             maxRetries = 3
-            // Configure delay strategy (e.g., exponential backoff)
-            exponentialDelay() // e.g., 1s, 2s, 4s
-            // You can also log retry attempts
-            // modifyRequest { request -> logger.info("Retrying request ${request.url}, attempt ${this.retryCount}") }
+            exponentialDelay()
+            // Retry on IOException (includes EOFException) and common network issues
+            retryOnExceptionIf { _, cause ->
+                cause is IOException || cause is ConnectException || cause is SocketTimeoutException
+            }
+            // Optionally, also retry on specific server errors if they are known to be transient
+            // retryOnServerErrors(RetryStatus.SERVER_ERRORS) // Retries on 5xx status codes
         }
     }
 
@@ -53,15 +53,15 @@ class NewsLoader(private val logger: Logger) {
      * @return A string containing the analysis text, or null if an error occurs.
      */
     suspend fun loadNews(): String? {
-        val url = "https://newser-service-272335850871.us-central1.run.app/analyze"
-        // Ensure your Logger implementation correctly substitutes the placeholder
+        // Use the constant URL
+        val url = NEWS_ANALYSIS_URL
         logger.info("Fetching news analysis from: {}", url)
         return try {
             val response = client.get(url)
             val newsAnalysis = response.body<NewsAnalysis>()
             logger.info("Successfully fetched and parsed news analysis.")
             newsAnalysis.analysis
-        } catch (e: Exception) { // Catching general Exception will also catch specific ones like EOFException or HttpRequestTimeoutException
+        } catch (e: Exception) {
             // Include the URL in the error log for better diagnostics
             logger.error("Error loading news from $url", error = e)
             null
