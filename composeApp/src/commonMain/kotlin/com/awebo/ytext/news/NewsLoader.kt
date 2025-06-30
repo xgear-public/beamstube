@@ -25,10 +25,10 @@ class NewsLoader(private val logger: Logger) {
 
     private val client = HttpClient(CIO) {
         install(HttpTimeout) {
-            // Adjusted timeouts for more typical behavior
-            requestTimeoutMillis = 25000 // Overall request time
-            connectTimeoutMillis = 5000  // Time to establish connection
-            socketTimeoutMillis = 15000  // Inactivity time during data transfer
+            // Give the entire request up to 90 seconds to complete.
+            requestTimeoutMillis = 90000
+            connectTimeoutMillis = 10000
+            socketTimeoutMillis = 80000
         }
         install(ContentNegotiation) {
             json(Json {

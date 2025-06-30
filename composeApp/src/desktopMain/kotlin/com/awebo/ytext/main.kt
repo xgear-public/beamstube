@@ -191,7 +191,7 @@ private fun FrameWindowScope.Menu(viewModel: YTViewModel) {
                 shortcut = KeyShortcut(Key.Y, meta = true)
             )
             Item(
-                "History",
+                "News",
                 onClick = { viewModel.onNewsClick() },
                 shortcut = KeyShortcut(Key.N, meta = true)
             )
