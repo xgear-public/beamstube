@@ -2,6 +2,7 @@ package com.awebo.ytext.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,7 +25,7 @@ fun History(
 ) {
     val videoList by historyViewModel.videos.collectAsStateWithLifecycle()
     LazyColumn(
-        modifier = modifier.height(600.dp).width(300.dp),
+        modifier = modifier.height(600.dp).width(300.dp).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

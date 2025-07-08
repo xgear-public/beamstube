@@ -99,12 +99,17 @@ fun VideoItem(
     topic: Topic? = null,
 ) {
     Column(
-        modifier = Modifier.width(250.dp).clickable { onVideoClick(video.id) },
+        modifier = Modifier.width(300.dp).clickable { onVideoClick(video.id) },
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Box(modifier = Modifier.width(250.dp)) {
+        Box(modifier = Modifier.fillMaxWidth()) {
             AsyncImage(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.Red)
+                ,
+                contentScale = androidx.compose.ui.layout.ContentScale.FillWidth,
                 model = video.thumbnailUrl,
                 contentDescription = null
             )
@@ -133,7 +138,7 @@ fun VideoItem(
                 }
             }
         }
-        Box(modifier = Modifier.width(250.dp)) {
+        Box(modifier = Modifier.fillMaxWidth()) {
             Text(
                 modifier = Modifier.align(Alignment.TopStart),
                 text = video.publishedAt.toFormattedString(),
@@ -157,7 +162,7 @@ fun VideoItem(
             )
         }
         Text(
-            modifier = Modifier.width(250.dp),
+            modifier = Modifier.fillMaxWidth(),
             text = video.title,
             style = TextStyle(
                 lineHeight = 16.sp,
