@@ -113,91 +113,74 @@ class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore, private val 
 
     /**
      * Determines the preferred caption language for a video using yt-dlp.
-     * Priority 1: Looks for explicitly "original" captions (e.g., lang code ends with "-orig" or name contains "(Original)").
-     * Priority 2 (Default): Returns "en" if no such "original" captions are found.
+     * This method implements a priority system for selecting the best language:
+     * 1.  Captions explicitly marked as "original" (e.g., lang code "en-orig" or name containing "(Original)").
+     * 2.  The first available manually created caption.
+     * 3.  Defaults to "en" if no suitable caption is found.
      *
-     * @param videoUrl The URL of the YouTube video
-     * @return The preferred language code
+     * @param videoUrl The URL of the YouTube video.
+     * @return The preferred language code.
      */
     private suspend fun getPreferredCaptionLanguage(videoUrl: String): String = withContext(Dispatchers.IO) {
-        val command = listOf(
-            YTDLP_COMMAND,
-            "--no-warnings",
-            "--list-subs",
-            videoUrl
-        )
+        val command = listOf(YTDLP_COMMAND, "--no-warnings", "--list-subs", videoUrl)
         logger.debug("Executing yt-dlp command to list subtitles: {}", command.joinToString(" "))
 
         try {
-            val processBuilder = ProcessBuilder(command)
-            val process = processBuilder.start()
-
+            val process = ProcessBuilder(command).start()
             val stdoutReader = BufferedReader(InputStreamReader(process.inputStream))
             val stderrReader = BufferedReader(InputStreamReader(process.errorStream))
 
-            val outputLines = mutableListOf<String>()
-            var line: String?
-            while (stdoutReader.readLine().also { line = it } != null) {
-                outputLines.add(line!!)
-            }
-            if (logger.isDebugEnabled()) {
-                logger.debug("yt-dlp --list-subs output:\n{}", outputLines.joinToString("\n"))
-            }
+            // Read all output at once
+            val outputLines = stdoutReader.readLines()
+            val errors = stderrReader.readText()
 
-            val errors = StringBuilder()
-            while (stderrReader.readLine().also { line = it } != null) {
-                errors.append(line).append("\n")
-            }
             if (errors.isNotBlank()) {
-                logger.warn("yt-dlp errors while listing subs: {}", errors)
+                logger.warn("yt-dlp errors while listing subs:\n{}", errors)
             }
 
             val exited = process.waitFor(30, TimeUnit.SECONDS)
             if (!exited || process.exitValue() != 0) {
-                logger.error("yt-dlp --list-subs command failed or timed out. Exit code: {}",
+                logger.error(
+                    "yt-dlp --list-subs command failed or timed out. Exit code: {}",
                     if (exited) process.exitValue() else "TIMEOUT"
                 )
                 return@withContext DEFAULT_LANGUAGE // Default to English on failure
             }
 
-            // --- Start Parsing Logic ---
-            var subtitlesSectionStarted = false
+            if (logger.isDebugEnabled()) {
+                logger.debug("yt-dlp --list-subs output:\n{}", outputLines.joinToString("\n"))
+            }
+
+            // --- Start Parsing Logic (Single Pass) ---
+            var inManualSubsSection = false
+            var firstFoundManualLang: String? = null
             val langCodeOriginalMarker = "-orig"
-            val langNameOriginalMarker = "(original)" // Case-insensitive check later
+            val langNameOriginalMarker = "(original)"
 
-            for (outputLine in outputLines) {
-                val trimmedLine = outputLine.trim()
+            for (line in outputLines) {
+                val trimmedLine = line.trim()
 
-                // Detect the start of subtitle listing.
-                // It could be a header like "Language Name Formats" or section start like "[info] Available ... captions"
-                if (trimmedLine.startsWith("Language Name", ignoreCase = true) ||
-                    trimmedLine.startsWith("[info] Available automatic captions for", ignoreCase = true)
-                ) {
-                    subtitlesSectionStarted = true
-                    continue // Skip this header line
+                // Update context based on section headers
+                if (trimmedLine.startsWith("[info] Available subtitles for", ignoreCase = true)) {
+                    inManualSubsSection = true
+                    continue
+                } else if (trimmedLine.startsWith("[info] Available automatic captions for", ignoreCase = true)) {
+                    inManualSubsSection = false
+                    continue
                 }
 
-                if (!subtitlesSectionStarted || trimmedLine.isEmpty() || trimmedLine.startsWith("[")) {
-                    continue // Skip lines before section starts, empty lines, or other [info] lines
+                // Skip irrelevant lines
+                if (trimmedLine.isEmpty() || trimmedLine.startsWith("Language Name") || trimmedLine.startsWith("[")) {
+                    continue
                 }
 
-                // Attempt to parse a subtitle entry line
-                // Format: <lang_code> <Language Name...> <formats...> [Auto-generated Yes/No]
-                // Example 1: en       English             vtt, ttml, srv3 Yes
-                // Example 2: fr       French              vtt, ttml, srv3
-                // Example 3: be-orig  Belarusian (Original) vtt, ttml, srv3
-                // Example 4 (from your output for automatic): ab Abkhazian vtt, ttml, srv3... (no auto-gen column here)
-
-                val parts = trimmedLine.split(Regex("\\s+"), limit = 2) // Split lang code from the rest
-                if (parts.size < 2) {
-                    continue // Not a valid subtitle line
-                }
+                val parts = trimmedLine.split(Regex("\\s+"), limit = 2)
+                if (parts.size < 2) continue
 
                 val langCode = parts[0]
-                val restOfLine = parts[1] // Contains "Language Name Formats..."
+                val restOfLine = parts[1]
 
-                // Heuristic to extract language name: find the first sequence of format strings like "vtt," or "ttml,"
-                // The name is before that. This is a bit fragile.
+                // Heuristic to extract language name
                 val formatKeywords = listOf("vtt", "ttml", "srv3", "srv2", "srv1", "json3")
                 var namePartEndIndex = restOfLine.length
                 for (keyword in formatKeywords) {
@@ -208,52 +191,33 @@ class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore, private val 
                 }
                 val langName = restOfLine.substring(0, namePartEndIndex).trim()
 
-
-                // Check for explicit "original" markers (Priority 1)
+                // Priority 1: Check for "original" marker. If found, return immediately.
                 if (langCode.endsWith(langCodeOriginalMarker, ignoreCase = true) ||
                     langName.contains(langNameOriginalMarker, ignoreCase = true)
                 ) {
-                    logger.debug("Found explicitly marked original language: Code='$langCode', Name='$langName'. Using code: '$langCode'")
-                    return@withContext langCode // Return the full code like "be-orig"
-                }
-            }
-
-            subtitlesSectionStarted = false
-
-            for (outputLine in outputLines) {
-                val trimmedLine = outputLine.trim()
-
-                // Detect the start of subtitle listing.
-                // It could be a header like "Language Name Formats" or section start like "[info] Available ... captions"
-                if (
-                    trimmedLine.startsWith("[info] Available subtitles for", ignoreCase = true)
-                ) {
-                    subtitlesSectionStarted = true
-                    continue // Skip this header line
-                }
-
-                if (!subtitlesSectionStarted || trimmedLine.isEmpty() || trimmedLine.startsWith("[")) {
-                    continue // Skip lines before section starts, empty lines, or other [info] lines
-                }
-
-                val parts = trimmedLine.split(Regex("\\s+"), limit = 2) // Split lang code from the rest
-                if (parts.size < 2) {
-                    continue // Not a valid subtitle line
-                }
-
-                val langCode = parts[0]
-                if (isLanguageCode(langCode))
+                    logger.debug("Found explicitly marked original language: Code='{}', Name='{}'. Using this.", langCode, langName)
                     return@withContext langCode
+                }
+
+                // Priority 2: Store the first valid manual language found.
+                if (inManualSubsSection && firstFoundManualLang == null && isLanguageCode(langCode)) {
+                    firstFoundManualLang = langCode
+                }
             }
 
-            // If no explicitly marked "original" caption was found after checking all lines
-            logger.debug("No explicitly marked '-orig' or '(Original)' captions found. Defaulting to English ('en').")
+            // If an original language was found, we would have already returned.
+            // Now, return the first manual language if we found one.
+            firstFoundManualLang?.let {
+                logger.debug("Found manual subtitle language: '{}'. Using it.", it)
+                return@withContext it
+            }
+
+            // Priority 3: Default to English if no better option was found.
+            logger.debug("No explicitly marked original or manual captions found. Defaulting to '{}'.", DEFAULT_LANGUAGE)
             return@withContext DEFAULT_LANGUAGE
 
         } catch (e: Exception) {
-            System.err.println("Error executing or processing yt-dlp --list-subs: ${e.message}")
-            logger.error("Error executing or processing yt-dlp --list-subs: ${e.message}")
-            e.printStackTrace()
+            logger.error("Error executing or processing yt-dlp --list-subs: ${e.message}", e)
             return@withContext DEFAULT_LANGUAGE // Default to English on error
         }
     }
@@ -425,8 +389,7 @@ class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore, private val 
                     null
                 }
         } catch (e: Exception) {
-            logger.error("Error during Ktor call to Gemini API: ${e.message}")
-            e.printStackTrace()
+            logger.error("Error during Ktor call to Gemini API: ${e.message}", e)
             null
         }
     }
