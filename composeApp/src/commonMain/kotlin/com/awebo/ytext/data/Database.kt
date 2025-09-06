@@ -10,6 +10,7 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.io.files.Path
 import java.time.Duration
 import java.time.Instant
 
@@ -47,6 +48,8 @@ fun getRoomDatabase(
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()
 }
+
+expect fun getDbPath(): String
 
 expect fun getDatabaseBuilder(): RoomDatabase.Builder<AppDatabase>
 

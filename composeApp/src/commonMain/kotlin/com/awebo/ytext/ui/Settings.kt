@@ -2,6 +2,7 @@ package com.awebo.ytext.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -9,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.awebo.ytext.data.AppLanguage
+import com.awebo.ytext.data.getDbPath
 import com.awebo.ytext.ui.vm.SettingsViewModel
 import org.koin.compose.koinInject
 
@@ -28,7 +30,7 @@ fun Settings(
             text = "Language",
             style = MaterialTheme.typography.h6
         )
-        
+
         AppLanguage.values().forEach { language ->
             LanguageRadioButton(
                 text = language.toString(),
@@ -36,9 +38,19 @@ fun Settings(
                 onSelected = { viewModel.setLanguage(language) }
             )
         }
-        
-        Spacer(modifier = Modifier.weight(1f))
-        
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Db path:",
+            style = MaterialTheme.typography.h6
+        )
+        SelectionContainer {
+            Text(text = getDbPath())
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Button(
             onClick = onDismiss,
             modifier = Modifier.fillMaxWidth()

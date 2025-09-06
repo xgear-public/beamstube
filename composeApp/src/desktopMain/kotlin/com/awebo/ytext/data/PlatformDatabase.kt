@@ -8,13 +8,13 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 actual fun getDatabaseBuilder(): RoomDatabase.Builder<AppDatabase> {
-    val dbPath = getDBPath()
+    val dbPath = getDbPath()
     return Room.databaseBuilder<AppDatabase>(
-        name = dbPath.toAbsolutePath().toString(),
+        name = dbPath,
     )
 }
 
-private fun getDBPath(): Path {
+fun getDesktopDBPath(): Path {
     val os = System.getProperty("os.name").lowercase()
     val appName = "YouTubeams"
     
