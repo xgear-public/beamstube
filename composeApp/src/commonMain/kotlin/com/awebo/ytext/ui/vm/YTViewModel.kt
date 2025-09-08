@@ -23,6 +23,7 @@ import org.jetbrains.compose.resources.getString
 import ytext.composeapp.generated.resources.Res
 import ytext.composeapp.generated.resources.topics_updating
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 class YTViewModel(
     private val videosRepository: VideosRepository,
@@ -66,13 +67,22 @@ class YTViewModel(
 
     fun reloadAllTopics() {
         viewModelScope.launch {
-            val message = getString(Res.string.topics_updating)
-            _uiState.update { state ->
-                state.copy(uiState = UiState.Toast(message))
-            }
-            withContext(Dispatchers.IO) {
-                val topics = videosRepository.reloadAllTopics()
-                _uiState.value = DashboardUIState(topics, miscDataStore.lastReload())
+            val lastReload = miscDataStore.lastReload()
+            val minAgo = Instant.now().minus(30, ChronoUnit.MINUTES)
+            println("lastReload: $lastReload, minAgo: $minAgo")
+            if (lastReload < minAgo) {
+                val message = getString(Res.string.topics_updating)
+                _uiState.update { state ->
+                    state.copy(uiState = UiState.Toast(message))
+                }
+                withContext(Dispatchers.IO) {
+                    val topics = videosRepository.reloadAllTopics()
+                    _uiState.value = DashboardUIState(topics, lastReload)
+                }
+            } else {
+                _uiState.update { state ->
+                    state.copy(uiState = UiState.Toast("topics were updated less than 30 minutes ago"))
+                }
             }
         }
     }
