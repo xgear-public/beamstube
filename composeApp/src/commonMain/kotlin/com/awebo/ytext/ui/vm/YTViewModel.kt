@@ -77,7 +77,7 @@ class YTViewModel(
                 }
                 withContext(Dispatchers.IO) {
                     val topics = videosRepository.reloadAllTopics()
-                    _uiState.value = DashboardUIState(topics, lastReload)
+                    _uiState.value = DashboardUIState(topics, miscDataStore.lastReload())
                 }
             } else {
                 _uiState.update { state ->
