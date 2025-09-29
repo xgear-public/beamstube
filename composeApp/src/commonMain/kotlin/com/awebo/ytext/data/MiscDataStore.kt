@@ -1,6 +1,7 @@
 package com.awebo.ytext.data
 
 
+import YTExt.composeApp.BuildConfig
 import java.time.Instant
 import java.util.prefs.Preferences
 
@@ -29,7 +30,11 @@ class MiscDataStore(
     private val produceFilePath: () -> String,
 ) {
 
-    private val prefs: Preferences = Preferences.userNodeForPackage(MiscDataStore::class.java)
+    private val prefs: Preferences = if (BuildConfig.IS_RELEASE_MODE) {
+        Preferences.userRoot().node("com.awebo.ytext.release")
+    } else {
+        Preferences.userRoot().node("com.awebo.ytext.debug")
+    }
     private val RELOAD_KEY = "last_reload"
     private val LANGUAGE_KEY = "app_language"
     
