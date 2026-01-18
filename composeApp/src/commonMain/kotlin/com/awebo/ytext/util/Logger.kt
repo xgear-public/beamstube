@@ -75,7 +75,13 @@ class DefaultLogger(private val logFile: File) : Logger {
     private fun log(level: String, message: String, args: Array<out Any?>) {
         val timestamp = dateFormat.format(Date())
         val threadName = Thread.currentThread().name
-        val formattedMessage = if (args.isNotEmpty()) message.format(*args) else message
+        val formattedMessage = if (args.isNotEmpty()) {
+            try {
+                message.format(*args)
+            } catch (e: Exception) {
+                "$message [Log Format Error: ${e.message}]"
+            }
+        } else message
         val logEntry = "$timestamp [$threadName] $level - $formattedMessage\n"
 
         // Write to console

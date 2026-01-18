@@ -3,7 +3,6 @@ package com.awebo.ytext.ytapi
 import YTExt.composeApp.BuildConfig
 import com.awebo.ytext.data.MiscDataStore
 import com.awebo.ytext.util.Logger
-import com.awebo.ytext.util.createLogger
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
@@ -12,12 +11,10 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.koin.compose.koinInject
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
@@ -63,17 +60,17 @@ class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore, private val 
 
         val videoId = extractVideoId(videoUrl)
         if (videoId == null) {
-            logger.warn("Could not extract a valid video ID pattern from the URL: {}", videoUrl)
+            logger.warn("Could not extract a valid video ID pattern from the URL: %s", videoUrl)
         } else {
-            logger.debug("Extracted Video ID: {}", videoId)
+            logger.debug("Extracted Video ID: %s", videoId)
         }
 
         val preferredLang = getPreferredCaptionLanguage(videoUrl)
-        logger.info("Preferred language determined by yt-dlp: {}", preferredLang)
+        logger.info("Preferred language determined by yt-dlp: %s", preferredLang)
 
         val transcriptText = fetchTranscript(videoUrl, preferredLang) ?: return null
 
-        logger.debug("Fetched Transcript (First 500 chars): {}",
+        logger.debug("Fetched Transcript (First 500 chars): %s",
             transcriptText.take(500) + if (transcriptText.length > 500) "..." else ""
         )
 
@@ -88,7 +85,7 @@ class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore, private val 
             val process = ProcessBuilder(YTDLP_COMMAND, "--version").start()
             val exited = process.waitFor(5, TimeUnit.SECONDS)
             exited && process.exitValue() == 0
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
@@ -123,7 +120,7 @@ class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore, private val 
      */
     private suspend fun getPreferredCaptionLanguage(videoUrl: String): String = withContext(Dispatchers.IO) {
         val command = listOf(YTDLP_COMMAND, "--no-warnings", "--list-subs", videoUrl)
-        logger.debug("Executing yt-dlp command to list subtitles: {}", command.joinToString(" "))
+        logger.debug("Executing yt-dlp command to list subtitles: %s", command.joinToString(" "))
 
         try {
             val process = ProcessBuilder(command).start()
@@ -135,20 +132,20 @@ class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore, private val 
             val errors = stderrReader.readText()
 
             if (errors.isNotBlank()) {
-                logger.warn("yt-dlp errors while listing subs:\n{}", errors)
+                logger.warn("yt-dlp errors while listing subs:\n%s", errors)
             }
 
             val exited = process.waitFor(30, TimeUnit.SECONDS)
             if (!exited || process.exitValue() != 0) {
                 logger.error(
-                    "yt-dlp --list-subs command failed or timed out. Exit code: {}",
-                    if (exited) process.exitValue() else "TIMEOUT"
+                    "yt-dlp --list-subs command failed or timed out. Exit code: %s",
+                    if (exited) process.exitValue().toString() else "TIMEOUT"
                 )
                 return@withContext DEFAULT_LANGUAGE // Default to English on failure
             }
 
             if (logger.isDebugEnabled()) {
-                logger.debug("yt-dlp --list-subs output:\n{}", outputLines.joinToString("\n"))
+                logger.debug("yt-dlp --list-subs output:\n%s", outputLines.joinToString("\n"))
             }
 
             // --- Start Parsing Logic (Single Pass) ---
@@ -195,7 +192,7 @@ class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore, private val 
                 if (langCode.endsWith(langCodeOriginalMarker, ignoreCase = true) ||
                     langName.contains(langNameOriginalMarker, ignoreCase = true)
                 ) {
-                    logger.debug("Found explicitly marked original language: Code='{}', Name='{}'. Using this.", langCode, langName)
+                    logger.debug("Found explicitly marked original language: Code='%s', Name='%s'. Using this.", langCode, langName)
                     return@withContext langCode
                 }
 
@@ -208,12 +205,12 @@ class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore, private val 
             // If an original language was found, we would have already returned.
             // Now, return the first manual language if we found one.
             firstFoundManualLang?.let {
-                logger.debug("Found manual subtitle language: '{}'. Using it.", it)
+                logger.debug("Found manual subtitle language: '%s'. Using it.", it)
                 return@withContext it
             }
 
             // Priority 3: Default to English if no better option was found.
-            logger.debug("No explicitly marked original or manual captions found. Defaulting to '{}'.", DEFAULT_LANGUAGE)
+            logger.debug("No explicitly marked original or manual captions found. Defaulting to '%s'.", DEFAULT_LANGUAGE)
             return@withContext DEFAULT_LANGUAGE
 
         } catch (e: Exception) {
@@ -300,14 +297,14 @@ class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore, private val 
                     }
                 }
 
-                logger.debug("Downloaded captions to: {}", fileToRead.absolutePath)
+                logger.debug("Downloaded captions to: %s", fileToRead.absolutePath)
                 val srtContent = fileToRead.readText(Charsets.UTF_8)
                 fileToRead.delete()
 
                 return@withContext parseSrtContent(srtContent)
 
             } catch (e: Exception) {
-                logger.error("Error downloading captions: {}", e.message ?: "Unknown error", e)
+                logger.error("Error downloading captions: %s", e.message ?: "Unknown error", e)
                 return@withContext null
             } finally {
                 actualExpectedFileWithLang.delete()
@@ -351,7 +348,7 @@ class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore, private val 
         }
         val summarizationLanguageText = miscDataStore.getLanguage().summarizationLanguageText
 
-        val modelName = "gemini-2.0-flash"
+        val modelName = "gemini-2.5-flash"
         val apiUrl =
             "https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=${BuildConfig.GOOGLE_AI_STUDIO_API_KEY}"
         val promptText = """

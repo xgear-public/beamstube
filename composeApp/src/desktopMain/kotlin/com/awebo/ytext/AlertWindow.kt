@@ -19,6 +19,6 @@ fun AlertWindow(visible: Boolean, alertText: String, onCloseRequest: () -> Unit)
         resizable = false,
         title = stringResource(Res.string.alert)
     ) {
-        Alert(modifier = Modifier.wrapContentSize(), alertText = alertText, onDismiss = onCloseRequest)
+        Alert(alertText = alertText, onDismiss = onCloseRequest)
     }
 }
