@@ -19,6 +19,8 @@ Multi-language support: The app interface and summarization results can be displ
   It contains several subfolders:
   - `commonMain` is for code that’s common for all targets.
 
+to read release logs on mac:
+`tail -f ~/Library/Logs/YouTubeams/debug.log`
 
 
 Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…

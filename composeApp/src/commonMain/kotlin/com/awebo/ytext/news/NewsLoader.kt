@@ -4,16 +4,16 @@ import com.awebo.ytext.util.Logger
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.IOException
-import java.net.ConnectException // Import specific exceptions for clarity
+import java.net.ConnectException
 import java.net.SocketTimeoutException
+import kotlin.time.Duration.Companion.seconds
 
 @Serializable
 private data class NewsAnalysis(val analysis: String)
@@ -26,9 +26,9 @@ class NewsLoader(private val logger: Logger) {
     private val client = HttpClient(CIO) {
         install(HttpTimeout) {
             // Give the entire request up to 90 seconds to complete.
-            requestTimeoutMillis = 90000
-            connectTimeoutMillis = 10000
-            socketTimeoutMillis = 80000
+            requestTimeoutMillis = 90.seconds.inWholeMilliseconds
+            connectTimeoutMillis = 90.seconds.inWholeMilliseconds
+            socketTimeoutMillis = 90.seconds.inWholeMilliseconds
         }
         install(ContentNegotiation) {
             json(Json {
