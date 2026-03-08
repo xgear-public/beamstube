@@ -6,6 +6,7 @@ import com.awebo.ytext.util.Logger
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -21,6 +22,7 @@ import java.io.InputStreamReader
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
+import kotlin.time.Duration.Companion.seconds
 
 
 /**
@@ -38,6 +40,12 @@ class YouTubeTranscriptSummarizer(val miscDataStore: MiscDataStore, private val 
 
     // Ktor HTTP Client for Gemini
     private val ktorHttpClient = HttpClient(CIO) {
+        install(HttpTimeout) {
+            // Give the entire request up to 90 seconds to complete.
+            requestTimeoutMillis = 90.seconds.inWholeMilliseconds
+            connectTimeoutMillis = 90.seconds.inWholeMilliseconds
+            socketTimeoutMillis = 90.seconds.inWholeMilliseconds
+        }
         install(ContentNegotiation) {
             json(Json {
                 prettyPrint = true
